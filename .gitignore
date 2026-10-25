@@ -1,0 +1,12 @@
+__pycache__/
+.pytest_cache/
+.ipynb_checkpoints/
+*.py[cod]
+.venv/
+data/
+outputs/
+tmp/
+weights/*.pt
+weights/*.pth
+*.pdf
+!weights/README.md

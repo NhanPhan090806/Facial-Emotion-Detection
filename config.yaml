@@ -1,0 +1,19 @@
+# Relative paths are resolved against this file's directory.
+source: 0  # Local webcam, video/image path, or phone URL such as http://<ip>:8080/video
+weights:
+  cnn: weights/cnn_best.pt
+  transfer: weights/transfer_best.pt
+confidence_threshold: 0.40
+device: cpu
+cpu_threads: 4
+face_detection:
+  scale_factor: 1.1
+  min_neighbors: 5
+  min_size: 40
+  max_detection_width: 640
+  margin: 0.10
+camera:
+  reconnect_attempts: 5
+  reconnect_delay: 1.0
+  open_timeout_ms: 5000
+  read_timeout_ms: 5000
