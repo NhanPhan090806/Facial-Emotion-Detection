@@ -179,7 +179,7 @@ validation predictions use float32, matching deployment.
 
 The default batch size is 128 to match the first Kaggle run. Both notebooks use
 NUM_WORKERS=0 to avoid the notebook worker-cleanup issue; this does not disable GPU
-training. The progress bar uses plain tqdm instead of tqdm.auto. Training-only
+training. Training prints one flushed summary per epoch, with no batch progress bars. Training-only
 augmentation never changes validation/test/inference preprocessing.
 
 RUN_NAME defaults to `fer2013_accuracy_v2`. Local results are stored in

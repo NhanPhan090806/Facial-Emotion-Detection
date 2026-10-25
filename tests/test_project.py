@@ -160,8 +160,7 @@ class ProjectTests(unittest.TestCase):
     @unittest.skipUnless(torch.cuda.is_available(), "CUDA unavailable")
     def test_cuda_mixed_precision_training(self):
         data = build_data(self.data_root, batch_size=14, val_fraction=0.25)
-        with contextlib.redirect_stdout(io.StringIO()), \
-                patch("src.train.tqdm", side_effect=lambda items, **kwargs: items):
+        with contextlib.redirect_stdout(io.StringIO()):
             for name in ["cnn", "transfer"]:
                 config = TrainConfig(model_name=name, epochs=1, device="cuda", amp=True,
                                      pretrained=False, cpu_threads=2)
@@ -181,7 +180,6 @@ class ProjectTests(unittest.TestCase):
                     for name, config in accuracy_recipes(model_name, seed, device).items()}
 
         with contextlib.redirect_stdout(log), patch("IPython.display.display"), \
-                patch("src.train.tqdm", side_effect=lambda items, **kwargs: items), \
                 patch("src.experiments.accuracy_recipes", side_effect=smoke_recipes):
             for cell in notebook.cells:
                 if cell.cell_type != "code":
@@ -198,6 +196,8 @@ class ProjectTests(unittest.TestCase):
                 source = source.replace("pretrained=True", "pretrained=False")
                 source = source.replace('device="auto"', 'device="cpu"')
                 exec(compile(source, "notebooks/train.ipynb", "exec"), namespace)
+        epoch_lines = [line for line in log.getvalue().splitlines() if line.startswith("Epoch ")]
+        self.assertEqual(len(epoch_lines), 5)  # Five one-epoch candidates; no per-batch output.
         for name in ["cnn", "transfer"]:
             folder = self.work / "outputs" / name
             self.assertTrue((folder / "best.pt").is_file())

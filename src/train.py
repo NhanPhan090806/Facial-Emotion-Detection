@@ -11,7 +11,6 @@ import numpy as np
 import torch
 from sklearn.metrics import accuracy_score, f1_score
 from torch import nn
-from tqdm import tqdm
 
 from src.data import CLASS_NAMES, MEAN, STD, DataBundle
 from src.model import build_model, count_parameters
@@ -61,7 +60,7 @@ def run_epoch(model, loader, criterion, device, optimizer=None, scaler=None, amp
     targets, predictions = [], []
     context = torch.enable_grad() if training else torch.inference_mode()
     with context:
-        for images, labels in tqdm(loader, desc="train" if training else "val", leave=False):
+        for images, labels in loader:
             images = images.to(device, non_blocking=True)
             labels = labels.to(device, non_blocking=True)
             if training:
@@ -142,7 +141,7 @@ def fit(config: TrainConfig, data: DataBundle, output_dir):
     (output_dir / "data_config.json").write_text(json.dumps(data.settings, indent=2), encoding="utf-8")
     data.save_manifest(output_dir / "split_manifest.json")
     (output_dir / "class_counts.json").write_text(json.dumps(data.class_counts(), indent=2), encoding="utf-8")
-    print(f"{config.model_name}: {count_parameters(model):,} parameters | {device} | AMP={amp}")
+    print(f"{config.model_name}: {count_parameters(model):,} parameters | {device} | AMP={amp}", flush=True)
     start = time.perf_counter()
     for epoch in range(1, config.epochs + 1):
         epoch_start = time.perf_counter()
@@ -177,10 +176,10 @@ def fit(config: TrainConfig, data: DataBundle, output_dir):
             writer = csv.DictWriter(stream, fieldnames=list(row))
             writer.writeheader()
             writer.writerows(history)
-        print(f"Epoch {epoch:03d} | train loss {row['train_loss']:.4f} "
+        print(f"Epoch {epoch:03d}/{config.epochs:03d} | train loss {row['train_loss']:.4f} "
               f"acc {row['train_accuracy']:.3f} | val loss {row['val_loss']:.4f} "
-              f"acc {row['val_accuracy']:.3f} F1 {row['val_macro_f1']:.3f}" +
-              (" *" if improved else ""))
+              f"acc {row['val_accuracy']:.3f} F1 {row['val_macro_f1']:.3f} | {row['seconds']:.1f}s" +
+              (" *" if improved else ""), flush=True)
         if stale >= config.patience:
             print(f"Early stopping; best validation epoch: {best_epoch}.")
             break
