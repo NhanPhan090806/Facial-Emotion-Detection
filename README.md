@@ -4,10 +4,11 @@ PyTorch implementation of the supplied lab PDF, with the later supplied architec
 image taking precedence for M1. The project trains two classifiers and runs emotion
 recognition on phone IP cameras, webcams, image files and video files.
 
-**Implementation status:** both training notebooks and the application are provided.
-The repository does not contain trained FER checkpoints or measured FER scores yet.
-The PDF's targets are M1 accuracy >= 60%, M2 accuracy >= 65%, and >= 10 FPS for the
-CPU realtime application. These are measurements to verify after training, not promises.
+**Implementation status:** the downloaded first run measured M1 accuracy 65.99%
+and M2 accuracy 67.69%, meeting the lab's FER accuracy targets. The new accuracy-first
+comparison is implemented, but its FER gains still need measurement. Large weights
+and run outputs are excluded from Git by default. The >=10 FPS realtime requirement
+still needs verification on the demonstration laptop.
 
 ## Structure
 
@@ -26,6 +27,7 @@ CPU realtime application. These are measurements to verify after training, not p
 │   ├── app.py               # Required realtime/image/video command line
 │   ├── data.py              # Dataset, augmentation, stratified split, class weights
 │   ├── train.py             # Explicit PyTorch training loop
+│   ├── experiments.py       # Compare candidates on validation accuracy
 │   ├── evaluate.py          # Metrics, plots, errors and CPU model timing
 │   └── report.py            # Generate a six-page PDF from actual results
 ├── weights/                 # Put cnn_best.pt and transfer_best.pt here after training
@@ -33,8 +35,9 @@ CPU realtime application. These are measurements to verify after training, not p
 └── report.pdf               # Generated after training; not fabricated in advance
 ```
 
-The original PDF and `train_market1501_kaggle.ipynb` are retained as references.
-`data/`, `outputs/`, checkpoints, generated PDFs and development files in `tmp/`
+The original PDF is the specification; the Kaggle clone/import workflow follows
+the example notebook supplied at the start of the project.
+`data/`, `outputs/`, `runs/`, checkpoints, generated PDFs and development files in `tmp/`
 are ignored by Git. Include the final report and weights in your submission ZIP,
 or add real download links for separately hosted checkpoints.
 
@@ -143,32 +146,68 @@ normalization is a deliberate fine-tuning choice; these are not the stock
 224x224 RGB ImageNet transforms. Initial weights download on first training use.
 Loading a saved FER checkpoint for inference requires no download.
 
-## Train locally
+## Train locally: accuracy-first comparison
 
-Open `notebooks/train.ipynb`, check the data/output paths, and run all cells.
-The default Windows notebook loader uses `num_workers=0` to avoid multiprocessing
-problems. A GPU is strongly recommended; the code also supports CPU execution.
+Open `notebooks/train.ipynb`, check DATA_ROOT, and run all cells. The exact supplied
+M1 architecture and adapted ResNet-18 architecture are retained. The new default
+workflow compares candidates and exports the **highest-validation-accuracy** model;
+macro F1 breaks exact ties. It does not assume the new recipe improves accuracy.
 
-| Setting | M1 | M2 |
-| --- | --- | --- |
-| Epoch limit | 80 | 40 |
-| AdamW learning rate | 0.001 | head 0.001, backbone 0.0001 |
-| Weight decay | 0.0001 | 0.0001 |
-| Early-stopping patience | 18 | 12 |
-| Label smoothing | 0.05 | 0.05 |
-| Batch size (local default) | 64 | 64 |
-| Scheduler | cosine | cosine |
-| Checkpoint selection | validation accuracy, then macro F1 | same |
+The first supplied Kaggle run measured M1 accuracy 65.99% / macro F1 0.6337, and
+M2 accuracy 67.69% / macro F1 0.6577. See [the first-run review](analysis/run1_review.md)
+for the diagnosis behind the candidate choices. M2 showed a substantial training
+versus validation gap; the changes target generalization without aggressively
+rebalancing the classes.
 
-Gradient clipping limits norm to 5. CUDA mixed precision is enabled when available.
-`train_loss` and `val_loss` are plain cross entropy, making the plots interpretable;
-the weighted/smoothed loss used for optimization is also saved as `train_objective_loss`.
-Training measurements include augmentation and dropout, while validation does not.
-The test set is not used for early stopping, class weights, or hyperparameter selection.
+| Candidate | Models | Training augmentation | Other changes |
+| --- | --- | --- | --- |
+| baseline | M1, M2 | Original flip + mild affine | Original optimizer settings |
+| lighting | M1, M2 | Baseline + brightness/contrast jitter, 0.15 each | None |
+| regularized | M2 | Lighting + erasing p=0.10, area 2-6% | Weight decay 5e-4, backbone LR 5e-5 |
 
-Every call to `fit` starts a new experiment and replaces files in its output
-directory. Change `OUTPUT_ROOT` to preserve a previous run. `best.pt` and `last.pt`
-are inference checkpoints, not complete optimizer-resume snapshots.
+M1 candidates use 80 epochs maximum, head LR 1e-3, weight decay 1e-4 and patience
+18. M2 candidates each use the first run's **20-epoch** maximum and patience 12;
+baseline/lighting use head LR 1e-3, backbone LR 1e-4 and weight decay 1e-4.
+The regularized candidate combines modest changes for a practical candidate search,
+so a gain cannot be attributed to a single change without a later ablation.
+
+All candidates retain square-root inverse-frequency class weights, label smoothing
+0.05, AdamW, cosine LR decay and gradient clipping at norm 5. No oversampling is
+stacked with the weighted loss. The same split seed and validation images are used
+throughout. CUDA mixed precision is enabled for training; checkpoint selection and
+validation predictions use float32, matching deployment.
+
+The default batch size is 128 to match the first Kaggle run. Both notebooks use
+NUM_WORKERS=0 to avoid the notebook worker-cleanup issue; this does not disable GPU
+training. The progress bar uses plain tqdm instead of tqdm.auto. Training-only
+augmentation never changes validation/test/inference preprocessing.
+
+RUN_NAME defaults to `fer2013_accuracy_v2`. Local results are stored in
+`runs/fer2013_accuracy_v2/`; this preserves the downloaded first-run folder and
+keeps candidate weights separate from active application weights. Five fits take
+longer than the original two-model run. To reuse the downloaded original baselines,
+set this in the local notebook:
+
+```python
+BASELINE_RESULTS_ROOT = PROJECT_ROOT / "kaggle_outputs" / "run1_1025" / "outputs"
+```
+
+This requires `cnn/best.pt`, `transfer/best.pt`, their configs and their split
+manifests. The helper verifies that each reused baseline's training/validation
+membership and training config match before comparison. Archived baselines are
+re-evaluated on validation in float32; old test results do not choose the winner.
+If no archive is supplied, baseline candidates are trained from scratch too.
+
+Completed candidates with matching configs, loader settings and split manifests
+are reused on rerun. An interrupted fit cannot resume its optimizer; preserve its
+files and choose a new RUN_NAME. Changed recipes/settings also require a new name.
+The lower-level `fit()` still starts fresh and overwrites its own output directory;
+`run_accuracy_experiments()` adds the completion checks around it.
+
+The selected model can remain the baseline. Winning on this validation split does
+not guarantee a gain on FER test data or the classroom camera. Inspect the final
+validation diagnostics and then run the notebook's final test cell once for the
+selected models. Keep the original checkpoints available for comparison.
 
 ## Train on Kaggle
 
@@ -176,19 +215,19 @@ are inference checkpoints, not complete optimizer-resume snapshots.
 2. Upload `train_kaggle.ipynb` as a Kaggle notebook.
 3. Replace `REPO_URL` in its first code cell with the real repository HTTPS URL.
    `REPO_REF` optionally selects an existing branch/tag on the first clone.
-4. Enable Internet and a GPU accelerator. Add the linked FER-2013 dataset using
+4. Start a fresh Kaggle session after uploading the updated helpers. Enable Internet and a GPU accelerator. Add the linked FER-2013 dataset using
    **Add Input**. The notebook finds the folder below `/kaggle/input`; if none is
    attached it optionally downloads through [kagglehub](https://github.com/Kaggle/kagglehub).
    If more than one candidate exists, set `DATA_ROOT_OVERRIDE` explicitly.
 5. Run all cells. Both models train through the cloned `src` helpers. The
    notebook records the Git commit and writes results under `/kaggle/working`.
-6. Download `fer2013_results.zip`. Copy its `weights/cnn_best.pt` and
+6. Download `fer2013_accuracy_v2.zip`. After reviewing the measured results, copy its `weights/cnn_best.pt` and
    `weights/transfer_best.pt` into this project's `weights/` directory.
 
-Kaggle defaults to batch size 128 and two data-loader workers. Reduce batch size
+Kaggle defaults to batch size 128 and zero data-loader workers. Reduce batch size
 if memory is insufficient. A second GPU is not required. On rerun, the notebook
 reuses the clone and verifies its origin; it does not silently pull or reset files.
-Start a fresh session or explicitly update the clone to use a newer commit.
+Start a fresh session or explicitly update the clone and restart its kernel to use a newer commit. The notebook checks that the new experiments helper exists.
 
 The PDF requires an executed `notebooks/train.ipynb` with outputs. Downloading the
 executed Kaggle notebook does not execute the separate local notebook. Run the
@@ -197,14 +236,22 @@ and retain the executed version at the required submission path.
 
 ## Evaluation artifacts
 
+Under RUN_ROOT (`runs/fer2013_accuracy_v2` locally; `/kaggle/working/fer2013_accuracy_v2` on Kaggle):
+
 ```text
 outputs/
 ├── class_distribution.png
 ├── split_manifest.json
 ├── comparison.csv / comparison.json
+├── experiments/
+│   ├── cnn/{baseline,lighting}/
+│   └── transfer/{baseline,lighting,regularized}/
 ├── cnn/
 │   ├── best.pt / last.pt
-│   ├── config.json / training_summary.json
+│   ├── config.json / data_config.json / training_summary.json
+│   ├── selection.json / validation_metrics.json
+│   ├── validation_predictions.csv / validation_classification_report.json
+│   ├── validation_confusion_matrix.csv
 │   ├── class_counts.json / split_manifest.json
 │   ├── history.csv / training_curves.png
 │   ├── metrics.json / classification_report.json
@@ -273,15 +320,15 @@ buffering can still add latency. More faces and larger frames increase work.
 
 ## Finish the report and submission
 
-The notebooks generate a six-page `report.pdf` using real experiment outputs.
+The notebooks generate a six-page `RUN_ROOT/report.pdf` using real experiment outputs, including the selected augmentation profile.
 Without a real demo screenshot, page six is explicitly marked pending. Add
 your own image-specific error discussion in `src/report.py`, then regenerate:
 
 ```powershell
-python -m src.report --results outputs --output report.pdf --screenshot outputs/demo_screenshot.jpg --author "Your name / student ID"
+python -m src.report --results runs/fer2013_accuracy_v2/outputs --output runs/fer2013_accuracy_v2/report.pdf --screenshot outputs/demo_screenshot.jpg --author "Your name / student ID"
 ```
 
-For a Kaggle run, extract its `outputs/` folder into this project first. Include
+For a Kaggle run, extract the archive into `runs/fer2013_accuracy_v2/` first. Include
 data/preprocessing, both architectures, hyperparameters, actual M3 results,
 confusion matrices, ten errors per model and a phone-camera screenshot. Verify
 both required commands and the >=10 CPU FPS requirement on the demonstration
@@ -296,8 +343,9 @@ laptop. Keep the executed notebook, report and trained weights in the submission
 These tests validate M1 shapes, the pretrained RGB-to-grayscale conversion,
 split isolation, checkpoint/preprocessing consistency, both notebook syntaxes,
 and an end-to-end notebook smoke run on generated images. The smoke run trains
-both models for one epoch **without pretrained downloads**, produces evaluation
+all five candidates for one epoch **without pretrained downloads**, produces evaluation
 artifacts/report, and checks image, video, multiple-face and disconnect handling.
-Synthetic-image test scores are not FER-2013 results. When CUDA is available,
+The checks also verify accuracy-first selection, split-safe baseline reuse, caching, and training-only augmentation. Synthetic-image test scores are not FER-2013 results. When CUDA is available,
 an additional test checks mixed-precision training for both models on the same
-generated images.
+generated images. Copy the reviewed final run's PDF to the root `report.pdf` for
+the submission layout required by the specification.

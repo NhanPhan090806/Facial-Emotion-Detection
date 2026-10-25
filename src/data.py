@@ -5,7 +5,7 @@ The Kaggle dataset already has train/ and test/. Validation comes ONLY from trai
 
 import json
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
@@ -24,7 +24,10 @@ MEAN = (0.5,)
 STD = (0.5,)
 
 
-def make_transform(training: bool = False):
+def make_transform(training: bool = False, augmentation: str = "baseline"):
+    """Lighting/occlusion are training-only; inference remains exactly unchanged."""
+    if augmentation not in {"baseline", "lighting", "occlusion"}:
+        raise ValueError("augmentation must be baseline, lighting, or occlusion.")
     steps = [transforms.Grayscale(num_output_channels=1), transforms.Resize((48, 48))]
     if training:
         steps.extend([
@@ -34,7 +37,14 @@ def make_transform(training: bool = False):
                 interpolation=InterpolationMode.BILINEAR, fill=128,
             ),
         ])
+        if augmentation in {"lighting", "occlusion"}:
+            steps.append(transforms.ColorJitter(brightness=0.15, contrast=0.15))
     steps.extend([transforms.ToTensor(), transforms.Normalize(MEAN, STD)])
+    if training and augmentation == "occlusion":
+        # Zero is mid-gray after normalization. Keep the erased region small at 48x48.
+        steps.append(transforms.RandomErasing(
+            p=0.10, scale=(0.02, 0.06), ratio=(0.5, 2.0), value=0.0,
+        ))
     return transforms.Compose(steps)
 
 
@@ -78,6 +88,7 @@ class DataBundle:
     val_loader: DataLoader
     test_loader: DataLoader
     class_weights: torch.Tensor
+    settings: dict = field(default_factory=dict)
 
     def class_counts(self):
         return {split: dict(zip(CLASS_NAMES, np.bincount(dataset.targets, minlength=7).tolist()))
@@ -97,7 +108,8 @@ def seed_worker(worker_id):
     np.random.seed(seed)
 
 
-def build_data(data_root, batch_size=128, num_workers=0, val_fraction=0.1, seed=42):
+def build_data(data_root, batch_size=128, num_workers=0, val_fraction=0.1, seed=42,
+               augmentation="baseline"):
     if batch_size < 2:
         raise ValueError("Use batch_size >= 2 because M1 has BatchNorm1d.")
     if num_workers < 0 or not 0 < val_fraction < 1:
@@ -112,7 +124,7 @@ def build_data(data_root, batch_size=128, num_workers=0, val_fraction=0.1, seed=
         np.arange(len(train_folder)), test_size=val_fraction,
         random_state=seed, stratify=train_folder.targets,
     )
-    train = FaceDataset([train_folder.samples[i] for i in train_indices], make_transform(True))
+    train = FaceDataset([train_folder.samples[i] for i in train_indices], make_transform(True, augmentation))
     val = FaceDataset([train_folder.samples[i] for i in val_indices], make_transform(False))
     test = FaceDataset(test_folder.samples, make_transform(False))
     counts = np.bincount(train.targets, minlength=7)
@@ -129,4 +141,8 @@ def build_data(data_root, batch_size=128, num_workers=0, val_fraction=0.1, seed=
     train_loader = DataLoader(train, shuffle=True, generator=generator, drop_last=drop_last, **options)
     val_loader = DataLoader(val, shuffle=False, **options)
     test_loader = DataLoader(test, shuffle=False, **options)
-    return DataBundle(root, train, val, test, train_loader, val_loader, test_loader, weights)
+    settings = {"augmentation": augmentation, "batch_size": batch_size,
+                "num_workers": num_workers, "split_seed": seed, "val_fraction": val_fraction,
+                "class_weight_rule": "sqrt_inverse_frequency_normalized_mean_one",
+                "class_weights": weights.tolist()}
+    return DataBundle(root, train, val, test, train_loader, val_loader, test_loader, weights, settings)

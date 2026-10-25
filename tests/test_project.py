@@ -12,6 +12,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from dataclasses import replace
 from pathlib import Path
 from unittest.mock import patch
 
@@ -28,6 +29,7 @@ from src.data import CLASS_NAMES, build_data, make_transform
 from src.model import EmotionCNN, build_resnet18
 from src.predict import EmotionPredictor, load_checkpoint
 from src.train import TrainConfig, fit
+from src.experiments import accuracy_recipes, run_accuracy_experiments, select_candidate, verify_split
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -109,9 +111,51 @@ class ProjectTests(unittest.TestCase):
                     ast.parse(cell.source)
             combined = "\n".join(cell.source for cell in notebook.cells)
             self.assertIn("from src.train import", combined)
-            self.assertIn("fit(cnn_config, data", combined)
-            self.assertIn("fit(transfer_config, data", combined)
+            self.assertIn('cnn_recipes = accuracy_recipes("cnn"', combined)
+            self.assertIn('transfer_recipes = accuracy_recipes("transfer"', combined)
+            self.assertIn("run_accuracy_experiments(", combined)
             self.assertIn("pretrained=True", combined)
+
+    def test_accuracy_takes_priority_over_f1(self):
+        rows = [{"candidate": "accurate", "val_accuracy": 0.70, "val_macro_f1": 0.60},
+                {"candidate": "higher_f1", "val_accuracy": 0.69, "val_macro_f1": 0.80}]
+        self.assertEqual(select_candidate(rows)["candidate"], "accurate")
+        rows.append({"candidate": "tie_break", "val_accuracy": 0.70, "val_macro_f1": 0.61})
+        self.assertEqual(select_candidate(rows)["candidate"], "tie_break")
+
+    def test_augmentation_is_training_only_and_preserves_split(self):
+        image = Image.fromarray(np.arange(2304, dtype=np.uint8).reshape(48, 48))
+        reference = make_transform(False)(image)
+        baseline = build_data(self.data_root, batch_size=8, val_fraction=0.25)
+        for profile in ["lighting", "occlusion"]:
+            torch.testing.assert_close(make_transform(False, profile)(image), reference)
+            transformed = make_transform(True, profile)(image)
+            self.assertEqual(tuple(transformed.shape), (1, 48, 48))
+            self.assertTrue(torch.isfinite(transformed).all())
+            self.assertGreaterEqual(transformed.min().item(), -1)
+            self.assertLessEqual(transformed.max().item(), 1)
+            augmented = build_data(self.data_root, batch_size=8, val_fraction=0.25, augmentation=profile)
+            self.assertEqual(baseline.val.samples, augmented.val.samples)
+            self.assertEqual(baseline.test.samples, augmented.test.samples)
+            torch.testing.assert_close(baseline.class_weights, augmented.class_weights)
+        with self.assertRaises(ValueError):
+            make_transform(True, "unsupported")
+
+    def test_reused_baseline_requires_identical_split(self):
+        data = build_data(self.data_root, batch_size=8, val_fraction=0.25)
+        path = self.work / "manifest_check.json"
+        data.save_manifest(path)
+        verify_split(path, data)
+        manifest = json.loads(path.read_text())
+        for split in ["train", "val"]:
+            for row in manifest[split]:
+                row["path"] = row["path"].replace("\\", "/")
+        path.write_text(json.dumps(manifest), encoding="utf-8")
+        verify_split(path, data)
+        manifest["val"][0]["path"] = "different.jpg"
+        path.write_text(json.dumps(manifest), encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "val split differs"):
+            verify_split(path, data)
 
     @unittest.skipUnless(torch.cuda.is_available(), "CUDA unavailable")
     def test_cuda_mixed_precision_training(self):
@@ -131,8 +175,14 @@ class ProjectTests(unittest.TestCase):
         notebook = nbformat.read(ROOT / "notebooks/train.ipynb", as_version=4)
         namespace = {"__name__": "notebook_smoke_test"}
         log = io.StringIO()
+
+        def smoke_recipes(model_name, seed=42, device="auto"):
+            return {name: replace(config, epochs=1, pretrained=False, device="cpu", cpu_threads=2)
+                    for name, config in accuracy_recipes(model_name, seed, device).items()}
+
         with contextlib.redirect_stdout(log), patch("IPython.display.display"), \
-                patch("src.train.tqdm", side_effect=lambda items, **kwargs: items):
+                patch("src.train.tqdm", side_effect=lambda items, **kwargs: items), \
+                patch("src.experiments.accuracy_recipes", side_effect=smoke_recipes):
             for cell in notebook.cells:
                 if cell.cell_type != "code":
                     continue
@@ -142,7 +192,8 @@ class ProjectTests(unittest.TestCase):
                               f"OUTPUT_ROOT = Path({str(self.work / 'outputs')!r})\n"
                               f"WEIGHTS_DIR = Path({str(self.work / 'weights')!r})\n"
                               f"REPORT_PATH = Path({str(self.work / 'report.pdf')!r})\n"
-                              "BATCH_SIZE = 8\nNUM_WORKERS = 0\nVAL_FRACTION = 0.25\nSEED = 42")
+                              "BATCH_SIZE = 8\nNUM_WORKERS = 0\nVAL_FRACTION = 0.25\nSEED = 42\n"
+                              "BASELINE_RESULTS_ROOT = None")
                 source = source.replace("epochs=80", "epochs=1").replace("epochs=40", "epochs=1")
                 source = source.replace("pretrained=True", "pretrained=False")
                 source = source.replace('device="auto"', 'device="cpu"')
@@ -156,12 +207,35 @@ class ProjectTests(unittest.TestCase):
             metrics = json.loads((folder / "metrics.json").read_text())
             self.assertEqual(metrics["test_images"], 21)
             self.assertGreater(metrics["cpu_model_fps"], 0)
+            selection = json.loads((folder / "selection.json").read_text())
+            self.assertGreaterEqual(selection["validation_accuracy_gain"], 0)
+            self.assertTrue((folder / "validation_predictions.csv").is_file())
             with (folder / "predictions.csv").open(newline="", encoding="utf-8") as stream:
                 examples = [row for row in csv.DictReader(stream) if row["example_number"]]
             self.assertEqual(sorted(int(row["example_number"]) for row in examples), list(range(1, 11)))
             self.assertEqual(len((folder / "split_manifest.json").read_text()),
                              len((self.work / "outputs" / "split_manifest.json").read_text()))
         self.assertTrue((self.work / "report.pdf").is_file())
+        # A completed identical run is cached; it must not train again.
+        with contextlib.redirect_stdout(log), patch("src.experiments.fit", side_effect=AssertionError("Unexpected retraining")):
+            cached = run_accuracy_experiments(
+                "cnn", self.data_root, self.work / "outputs", batch_size=8,
+                val_fraction=0.25, recipes=smoke_recipes("cnn"),
+            )
+        self.assertEqual(cached["selected_candidate"], namespace["cnn_run"]["selected_candidate"])
+        # Archived baselines from the previous format can be reused without training.
+        archive_root = self.work / "archive"
+        shutil.copytree(self.work / "outputs/experiments/cnn/baseline", archive_root / "cnn")
+        archived_config = json.loads((archive_root / "cnn/config.json").read_text())
+        archived_config.pop("augmentation")
+        (archive_root / "cnn/config.json").write_text(json.dumps(archived_config), encoding="utf-8")
+        with contextlib.redirect_stdout(log), patch("src.experiments.fit", side_effect=AssertionError("Unexpected retraining")):
+            imported = run_accuracy_experiments(
+                "cnn", self.data_root, self.work / "imported", batch_size=8,
+                val_fraction=0.25, baseline_results_root=archive_root,
+                recipes={"baseline": smoke_recipes("cnn")["baseline"]},
+            )
+        self.assertEqual(imported["selected_candidate"], "baseline")
         if os.environ.get("FER_QA_DIR"):
             qa_dir = Path(os.environ["FER_QA_DIR"])
             qa_dir.mkdir(parents=True, exist_ok=True)

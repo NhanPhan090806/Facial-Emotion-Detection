@@ -78,7 +78,10 @@ def build_report(results_dir, output_path="report.pdf", screenshot=None, author=
             "Preprocessing: convert to grayscale, resize to 48 x 48, scale pixels to [0,1], then "
             "normalize with mean=0.5 and std=0.5. Training adds horizontal flips and mild affine "
             "rotation, shift and scale. Validation, test and realtime inference use no augmentation. "
-            "Square-root inverse class-frequency loss weights are derived only from training labels.\n\n"
+            "Square-root inverse class-frequency loss weights are derived only from training labels. "
+            "Lighting profiles add brightness/contrast jitter; occlusion adds small random erasing. "
+            f"Selected profiles: M1={configs['cnn'].get('augmentation', 'baseline')}, "
+            f"M2={configs['transfer'].get('augmentation', 'baseline')}.\n\n"
             "M1 (from scratch): four Conv3x3-BatchNorm-ReLU-MaxPool2x2-Dropout blocks, with "
             "32/64/128/256 channels and dropout 0.10/0.15/0.20/0.25. Flatten 3x3x256=2304, "
             "Linear256-BatchNorm-ReLU-Dropout0.50, then Linear7.\n\n"
@@ -86,7 +89,7 @@ def build_report(results_dir, output_path="report.pdf", screenshot=None, author=
             "one channel, set its stride to 1 and remove the initial max pool to preserve small-image "
             "detail. Replace the head with Dropout0.30-Linear7 and fine-tune every layer. The input "
             "normalization is deliberately adapted for FER, rather than the stock ImageNet transform.\n\n"
-            "Both models return logits for cross entropy; softmax is applied at inference.", 0.46)
+            "Both models return logits for cross entropy; softmax is applied at inference.", 0.46, size=9.5)
         pdf.savefig(fig); plt.close(fig)
 
         fig = page("Training and quantitative comparison", 2)
@@ -98,8 +101,9 @@ def build_report(results_dir, output_path="report.pdf", screenshot=None, author=
                         f"weight decay={config['weight_decay']}, smoothing={config['label_smoothing']}, "
                         f"epochs <= {config['epochs']}, patience={config['patience']}, seed={config['seed']}. "
                         f"Cosine LR schedule. Best epoch={result['best_epoch']}. "
-                        f"Training device={summaries[name]['device']}.")
-        paragraph(fig, "\n\n".join(text), 0.90)
+                        f"Training device={summaries[name]['device']}. "
+                        f"Augmentation={config.get('augmentation', 'baseline')}.")
+        paragraph(fig, "\n\n".join(text), 0.90, size=9)
         axis = fig.add_axes([0.08, 0.62, 0.84, 0.11]); axis.axis("off")
         rows = [[name, f"{m['test_accuracy']:.2%}", f"{m['test_macro_f1']:.4f}",
                  f"{m['parameters']:,}", f"{m['cpu_model_fps']:.1f}", "yes" if m["target_met"] else "no"]

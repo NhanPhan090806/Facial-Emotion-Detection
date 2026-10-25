@@ -11,7 +11,7 @@ import numpy as np
 import torch
 from sklearn.metrics import accuracy_score, f1_score
 from torch import nn
-from tqdm.auto import tqdm
+from tqdm import tqdm
 
 from src.data import CLASS_NAMES, MEAN, STD, DataBundle
 from src.model import build_model, count_parameters
@@ -32,6 +32,7 @@ class TrainConfig:
     seed: int = 42
     device: str = "auto"
     cpu_threads: int = 4
+    augmentation: str = "baseline"
 
 
 def seed_everything(seed):
@@ -106,6 +107,8 @@ def fit(config: TrainConfig, data: DataBundle, output_dir):
         raise ValueError("Learning rates must be positive.")
     if not 0 <= config.label_smoothing < 1:
         raise ValueError("label_smoothing must be in [0, 1).")
+    if config.augmentation != data.settings.get("augmentation", "baseline"):
+        raise ValueError("Build the data loaders using the config's augmentation profile.")
     seed_everything(config.seed)
     torch.set_num_threads(config.cpu_threads)
     device = resolve_device(config.device)
@@ -136,6 +139,7 @@ def fit(config: TrainConfig, data: DataBundle, output_dir):
     history = []
     config_dict = asdict(config)
     (output_dir / "config.json").write_text(json.dumps(config_dict, indent=2), encoding="utf-8")
+    (output_dir / "data_config.json").write_text(json.dumps(data.settings, indent=2), encoding="utf-8")
     data.save_manifest(output_dir / "split_manifest.json")
     (output_dir / "class_counts.json").write_text(json.dumps(data.class_counts(), indent=2), encoding="utf-8")
     print(f"{config.model_name}: {count_parameters(model):,} parameters | {device} | AMP={amp}")
@@ -143,7 +147,8 @@ def fit(config: TrainConfig, data: DataBundle, output_dir):
     for epoch in range(1, config.epochs + 1):
         epoch_start = time.perf_counter()
         train_metrics = run_epoch(model, data.train_loader, criterion, device, optimizer, scaler, amp)
-        val_metrics = run_epoch(model, data.val_loader, eval_criterion, device, amp=amp)
+        # Select in float32, matching deployment inference rather than training autocast.
+        val_metrics = run_epoch(model, data.val_loader, eval_criterion, device, amp=False)
         row = {"epoch": epoch, "learning_rate": optimizer.param_groups[-1]["lr"],
                **{f"train_{key}": value for key, value in train_metrics.items()},
                **{f"val_{key}": value for key, value in val_metrics.items()},
@@ -162,6 +167,7 @@ def fit(config: TrainConfig, data: DataBundle, output_dir):
             "preprocessing": {"image_size": 48, "channels": 1, "mean": list(MEAN), "std": list(STD)},
             "epoch": epoch, "best_epoch": best_epoch, "val_metrics": val_metrics,
             "config": config_dict, "parameters": count_parameters(model),
+            "data_config": data.settings,
         }
         # Portable inference checkpoints: no optimizer objects or arbitrary Python objects.
         torch.save(checkpoint, output_dir / "last.pt")

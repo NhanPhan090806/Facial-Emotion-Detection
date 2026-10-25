@@ -3,6 +3,7 @@ __pycache__/
 .ipynb_checkpoints/
 *.py[cod]
 .venv/
+runs/
 data/
 outputs/
 tmp/
@@ -10,3 +11,4 @@ weights/*.pt
 weights/*.pth
 *.pdf
 !weights/README.md
+kaggle_outputs
