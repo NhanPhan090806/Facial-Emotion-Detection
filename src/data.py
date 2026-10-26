@@ -26,17 +26,29 @@ STD = (0.5,)
 
 def make_transform(training: bool = False, augmentation: str = "baseline"):
     """Lighting/occlusion are training-only; inference remains exactly unchanged."""
-    if augmentation not in {"baseline", "lighting", "occlusion"}:
-        raise ValueError("augmentation must be baseline, lighting, or occlusion.")
+    if augmentation not in {"baseline", "lighting", "occlusion", "gentle_combined"}:
+        raise ValueError("augmentation must be baseline, lighting, occlusion, or gentle_combined.")
     steps = [transforms.Grayscale(num_output_channels=1), transforms.Resize((48, 48))]
     if training:
-        steps.extend([
-            transforms.RandomHorizontalFlip(p=0.5),
-            transforms.RandomAffine(
+        steps.append(transforms.RandomHorizontalFlip(p=0.5))
+        if augmentation == "gentle_combined":
+            # A 2-pixel crop shift replaces affine translation; do not stack both.
+            # Reflection avoids a dark border, and integer crop shifts avoid resampling.
+            steps.extend([
+                transforms.RandomCrop(48, padding=2, padding_mode="reflect"),
+                transforms.RandomAffine(
+                    degrees=8, scale=(0.95, 1.05),
+                    interpolation=InterpolationMode.BILINEAR, fill=128,
+                ),
+                transforms.RandomApply([
+                    transforms.ColorJitter(brightness=0.08, contrast=0.08),
+                ], p=0.5),
+            ])
+        else:
+            steps.append(transforms.RandomAffine(
                 degrees=10, translate=(0.08, 0.08), scale=(0.90, 1.10),
                 interpolation=InterpolationMode.BILINEAR, fill=128,
-            ),
-        ])
+            ))
         if augmentation in {"lighting", "occlusion"}:
             steps.append(transforms.ColorJitter(brightness=0.15, contrast=0.15))
     steps.extend([transforms.ToTensor(), transforms.Normalize(MEAN, STD)])

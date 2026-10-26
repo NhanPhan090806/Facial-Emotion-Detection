@@ -111,9 +111,9 @@ class ProjectTests(unittest.TestCase):
                     ast.parse(cell.source)
             combined = "\n".join(cell.source for cell in notebook.cells)
             self.assertIn("from src.train import", combined)
-            self.assertIn('cnn_recipes = accuracy_recipes("cnn"', combined)
-            self.assertIn('transfer_recipes = accuracy_recipes("transfer"', combined)
-            self.assertIn("run_accuracy_experiments(", combined)
+            self.assertIn("cnn_run = fit(cnn_config, data", combined)
+            self.assertIn("transfer_run = fit(transfer_config, data", combined)
+            self.assertNotIn("run_accuracy_experiments(", combined)
             self.assertIn("pretrained=True", combined)
 
     def test_accuracy_takes_priority_over_f1(self):
@@ -127,7 +127,7 @@ class ProjectTests(unittest.TestCase):
         image = Image.fromarray(np.arange(2304, dtype=np.uint8).reshape(48, 48))
         reference = make_transform(False)(image)
         baseline = build_data(self.data_root, batch_size=8, val_fraction=0.25)
-        for profile in ["lighting", "occlusion"]:
+        for profile in ["lighting", "occlusion", "gentle_combined"]:
             torch.testing.assert_close(make_transform(False, profile)(image), reference)
             transformed = make_transform(True, profile)(image)
             self.assertEqual(tuple(transformed.shape), (1, 48, 48))
@@ -169,18 +169,49 @@ class ProjectTests(unittest.TestCase):
                 self.assertTrue(np.isfinite(checkpoint["val_metrics"]["loss"]))
                 self.assertEqual(result["device"], "cuda")
 
+    def test_optional_experiment_reuse(self):
+        # The comparison helper remains supported, but is no longer in the notebooks.
+        config = replace(accuracy_recipes("cnn", stage=2)["baseline"], epochs=1,
+                         pretrained=False, device="cpu", cpu_threads=2)
+        recipes = {"baseline": config}
+        output = self.work / "optional_comparison"
+        with contextlib.redirect_stdout(io.StringIO()):
+            first = run_accuracy_experiments("cnn", self.data_root, output, batch_size=8,
+                                             val_fraction=0.25, recipes=recipes)
+        with contextlib.redirect_stdout(io.StringIO()), patch("src.experiments.fit", side_effect=AssertionError("Unexpected retraining")):
+            cached = run_accuracy_experiments("cnn", self.data_root, output, batch_size=8,
+                                              val_fraction=0.25, recipes=recipes)
+        self.assertEqual(cached["selected_candidate"], first["selected_candidate"])
+        archive_root = self.work / "archive"
+        shutil.copytree(output / "experiments/cnn/baseline", archive_root / "cnn")
+        archived_config = json.loads((archive_root / "cnn/config.json").read_text())
+        archived_config.pop("augmentation")
+        (archive_root / "cnn/config.json").write_text(json.dumps(archived_config), encoding="utf-8")
+        compact_root = self.work / "compact"
+        (compact_root / "weights").mkdir(parents=True)
+        (compact_root / "outputs").mkdir()
+        shutil.copy2(archive_root / "cnn/best.pt", compact_root / "weights/cnn_best.pt")
+        shutil.copy2(archive_root / "cnn/split_manifest.json", compact_root / "outputs/split_manifest.json")
+        with contextlib.redirect_stdout(io.StringIO()), patch("src.experiments.fit", side_effect=AssertionError("Unexpected retraining")):
+            imported = run_accuracy_experiments(
+                "cnn", self.data_root, self.work / "imported", batch_size=8,
+                val_fraction=0.25, baseline_results_root=archive_root, recipes=recipes,
+                reference_results_roots={"prior": archive_root, "compact": compact_root / "outputs"},
+            )
+        self.assertEqual(imported["selected_candidate"], "baseline")
+        self.assertEqual([row["candidate"] for row in imported["candidates"]],
+                         ["baseline", "reference_prior", "reference_compact"])
+        staged = self.work / "imported/experiments/cnn/reference_compact"
+        self.assertFalse((staged / "history.csv").exists())
+        self.assertFalse(json.loads((staged / "training_summary.json").read_text())["history_available"])
+
     def test_full_notebook_pipeline_and_app(self):
         """Execute local notebook code cells with tiny offline training overrides."""
         notebook = nbformat.read(ROOT / "notebooks/train.ipynb", as_version=4)
         namespace = {"__name__": "notebook_smoke_test"}
         log = io.StringIO()
 
-        def smoke_recipes(model_name, seed=42, device="auto"):
-            return {name: replace(config, epochs=1, pretrained=False, device="cpu", cpu_threads=2)
-                    for name, config in accuracy_recipes(model_name, seed, device).items()}
-
-        with contextlib.redirect_stdout(log), patch("IPython.display.display"), \
-                patch("src.experiments.accuracy_recipes", side_effect=smoke_recipes):
+        with contextlib.redirect_stdout(log), patch("IPython.display.display"):
             for cell in notebook.cells:
                 if cell.cell_type != "code":
                     continue
@@ -191,13 +222,13 @@ class ProjectTests(unittest.TestCase):
                               f"WEIGHTS_DIR = Path({str(self.work / 'weights')!r})\n"
                               f"REPORT_PATH = Path({str(self.work / 'report.pdf')!r})\n"
                               "BATCH_SIZE = 8\nNUM_WORKERS = 0\nVAL_FRACTION = 0.25\nSEED = 42\n"
-                              "BASELINE_RESULTS_ROOT = None")
+                              "")
                 source = source.replace("epochs=80", "epochs=1").replace("epochs=40", "epochs=1")
                 source = source.replace("pretrained=True", "pretrained=False")
                 source = source.replace('device="auto"', 'device="cpu"')
                 exec(compile(source, "notebooks/train.ipynb", "exec"), namespace)
         epoch_lines = [line for line in log.getvalue().splitlines() if line.startswith("Epoch ")]
-        self.assertEqual(len(epoch_lines), 5)  # Five one-epoch candidates; no per-batch output.
+        self.assertEqual(len(epoch_lines), 2)  # One fit per model; no candidates or per-batch output.
         for name in ["cnn", "transfer"]:
             folder = self.work / "outputs" / name
             self.assertTrue((folder / "best.pt").is_file())
@@ -207,8 +238,6 @@ class ProjectTests(unittest.TestCase):
             metrics = json.loads((folder / "metrics.json").read_text())
             self.assertEqual(metrics["test_images"], 21)
             self.assertGreater(metrics["cpu_model_fps"], 0)
-            selection = json.loads((folder / "selection.json").read_text())
-            self.assertGreaterEqual(selection["validation_accuracy_gain"], 0)
             self.assertTrue((folder / "validation_predictions.csv").is_file())
             with (folder / "predictions.csv").open(newline="", encoding="utf-8") as stream:
                 examples = [row for row in csv.DictReader(stream) if row["example_number"]]
@@ -216,26 +245,6 @@ class ProjectTests(unittest.TestCase):
             self.assertEqual(len((folder / "split_manifest.json").read_text()),
                              len((self.work / "outputs" / "split_manifest.json").read_text()))
         self.assertTrue((self.work / "report.pdf").is_file())
-        # A completed identical run is cached; it must not train again.
-        with contextlib.redirect_stdout(log), patch("src.experiments.fit", side_effect=AssertionError("Unexpected retraining")):
-            cached = run_accuracy_experiments(
-                "cnn", self.data_root, self.work / "outputs", batch_size=8,
-                val_fraction=0.25, recipes=smoke_recipes("cnn"),
-            )
-        self.assertEqual(cached["selected_candidate"], namespace["cnn_run"]["selected_candidate"])
-        # Archived baselines from the previous format can be reused without training.
-        archive_root = self.work / "archive"
-        shutil.copytree(self.work / "outputs/experiments/cnn/baseline", archive_root / "cnn")
-        archived_config = json.loads((archive_root / "cnn/config.json").read_text())
-        archived_config.pop("augmentation")
-        (archive_root / "cnn/config.json").write_text(json.dumps(archived_config), encoding="utf-8")
-        with contextlib.redirect_stdout(log), patch("src.experiments.fit", side_effect=AssertionError("Unexpected retraining")):
-            imported = run_accuracy_experiments(
-                "cnn", self.data_root, self.work / "imported", batch_size=8,
-                val_fraction=0.25, baseline_results_root=archive_root,
-                recipes={"baseline": smoke_recipes("cnn")["baseline"]},
-            )
-        self.assertEqual(imported["selected_candidate"], "baseline")
         if os.environ.get("FER_QA_DIR"):
             qa_dir = Path(os.environ["FER_QA_DIR"])
             qa_dir.mkdir(parents=True, exist_ok=True)

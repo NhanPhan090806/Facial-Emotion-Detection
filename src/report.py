@@ -80,6 +80,7 @@ def build_report(results_dir, output_path="report.pdf", screenshot=None, author=
             "rotation, shift and scale. Validation, test and realtime inference use no augmentation. "
             "Square-root inverse class-frequency loss weights are derived only from training labels. "
             "Lighting profiles add brightness/contrast jitter; occlusion adds small random erasing. "
+            "Gentle combined uses reflect-padded crops, smaller affine changes and occasional mild jitter. "
             f"Selected profiles: M1={configs['cnn'].get('augmentation', 'baseline')}, "
             f"M2={configs['transfer'].get('augmentation', 'baseline')}.\n\n"
             "M1 (from scratch): four Conv3x3-BatchNorm-ReLU-MaxPool2x2-Dropout blocks, with "
