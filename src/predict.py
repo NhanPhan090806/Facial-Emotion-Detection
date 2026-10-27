@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from PIL import Image
 
-from src.data import CLASS_NAMES, make_transform
+from src.data import CLASS_NAMES, make_transform, preprocessing_for
 from src.model import build_model
 from src.train import resolve_device
 
@@ -20,11 +20,14 @@ def load_checkpoint(path, device="cpu"):
     checkpoint = torch.load(path, map_location="cpu", weights_only=True)
     if checkpoint.get("class_names") != CLASS_NAMES:
         raise ValueError("Checkpoint class order does not match this project.")
-    expected = {"image_size": 48, "channels": 1, "mean": [0.5], "std": [0.5]}
+    # Version-1 transfer checkpoints are the previous ResNet-18 experiments.
+    architecture = checkpoint.get("architecture", "cnn" if checkpoint["model_name"] == "cnn" else "resnet18")
+    expected = preprocessing_for(architecture)
     if checkpoint.get("preprocessing") != expected:
-        raise ValueError("Checkpoint preprocessing does not match the 48x48 grayscale pipeline.")
-    # Loading saved weights must never trigger an ImageNet download.
-    model = build_model(checkpoint["model_name"], pretrained=False)
+        raise ValueError("Checkpoint preprocessing does not match its architecture.")
+    checkpoint["architecture"] = architecture
+    # Loading saved weights must never trigger a pretrained download.
+    model = build_model(checkpoint["model_name"], pretrained=False, architecture=architecture)
     model.load_state_dict(checkpoint["model_state"])
     model.to(device).eval()
     return model, checkpoint
@@ -34,7 +37,7 @@ class EmotionPredictor:
     def __init__(self, checkpoint_path, device="cpu"):
         self.device = resolve_device(device)
         self.model, self.checkpoint = load_checkpoint(checkpoint_path, self.device)
-        self.transform = make_transform(training=False)
+        self.transform = make_transform(training=False, architecture=self.checkpoint["architecture"])
         self.class_names = self.checkpoint["class_names"]
 
     @torch.inference_mode()

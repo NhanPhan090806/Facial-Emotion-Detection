@@ -24,14 +24,36 @@ MEAN = (0.5,)
 STD = (0.5,)
 
 
-def make_transform(training: bool = False, augmentation: str = "baseline"):
-    """Lighting/occlusion are training-only; inference remains exactly unchanged."""
-    if augmentation not in {"baseline", "lighting", "occlusion", "gentle_combined"}:
-        raise ValueError("augmentation must be baseline, lighting, occlusion, or gentle_combined.")
+def preprocessing_for(architecture="cnn"):
+    if architecture == "ddamfn":
+        return {"image_size": 112, "channels": 3, "mean": [0.485, 0.456, 0.406],
+                "std": [0.229, 0.224, 0.225], "grayscale": True}
+    if architecture not in {"cnn", "resnet18"}:
+        raise ValueError(f"Unknown architecture: {architecture}")
+    return {"image_size": 48, "channels": 1, "mean": [0.5], "std": [0.5]}
+
+
+def make_transform(training: bool = False, augmentation: str = "baseline", architecture="cnn"):
+    """Training-only augmentation followed by the architecture's deterministic transform."""
+    spec = preprocessing_for(architecture)
+    if augmentation not in {"baseline", "lighting", "occlusion", "gentle_combined", "fer_moderate"}:
+        raise ValueError("Unknown augmentation profile.")
+    # Augment at the source resolution before upsampling to the pretrained input size.
+    # Repeat grayscale for M2, including during live inference; do not invent color data.
     steps = [transforms.Grayscale(num_output_channels=1), transforms.Resize((48, 48))]
     if training:
         steps.append(transforms.RandomHorizontalFlip(p=0.5))
-        if augmentation == "gentle_combined":
+        if augmentation == "fer_moderate":
+            steps.extend([
+                transforms.RandomAffine(
+                    degrees=10, translate=(0.05, 0.05), scale=(0.95, 1.05),
+                    interpolation=InterpolationMode.BILINEAR, fill=128,
+                ),
+                transforms.RandomApply([
+                    transforms.ColorJitter(brightness=0.15, contrast=0.15),
+                ], p=0.7),
+            ])
+        elif augmentation == "gentle_combined":
             # A 2-pixel crop shift replaces affine translation; do not stack both.
             # Reflection avoids a dark border, and integer crop shifts avoid resampling.
             steps.extend([
@@ -51,7 +73,16 @@ def make_transform(training: bool = False, augmentation: str = "baseline"):
             ))
         if augmentation in {"lighting", "occlusion"}:
             steps.append(transforms.ColorJitter(brightness=0.15, contrast=0.15))
-    steps.extend([transforms.ToTensor(), transforms.Normalize(MEAN, STD)])
+    if spec["channels"] == 3:
+        steps.extend([transforms.Resize((spec["image_size"], spec["image_size"])),
+                      transforms.Grayscale(num_output_channels=3)])
+    steps.append(transforms.ToTensor())
+    if training and augmentation == "fer_moderate":
+        # Erase before normalization so all repeated channels still represent gray.
+        steps.append(transforms.RandomErasing(
+            p=0.15, scale=(0.01, 0.04), ratio=(0.5, 2.0), value=0.5,
+        ))
+    steps.append(transforms.Normalize(spec["mean"], spec["std"]))
     if training and augmentation == "occlusion":
         # Zero is mid-gray after normalization. Keep the erased region small at 48x48.
         steps.append(transforms.RandomErasing(
@@ -121,7 +152,7 @@ def seed_worker(worker_id):
 
 
 def build_data(data_root, batch_size=128, num_workers=0, val_fraction=0.1, seed=42,
-               augmentation="baseline"):
+               augmentation="baseline", architecture="cnn"):
     if batch_size < 2:
         raise ValueError("Use batch_size >= 2 because M1 has BatchNorm1d.")
     if num_workers < 0 or not 0 < val_fraction < 1:
@@ -136,9 +167,9 @@ def build_data(data_root, batch_size=128, num_workers=0, val_fraction=0.1, seed=
         np.arange(len(train_folder)), test_size=val_fraction,
         random_state=seed, stratify=train_folder.targets,
     )
-    train = FaceDataset([train_folder.samples[i] for i in train_indices], make_transform(True, augmentation))
-    val = FaceDataset([train_folder.samples[i] for i in val_indices], make_transform(False))
-    test = FaceDataset(test_folder.samples, make_transform(False))
+    train = FaceDataset([train_folder.samples[i] for i in train_indices], make_transform(True, augmentation, architecture))
+    val = FaceDataset([train_folder.samples[i] for i in val_indices], make_transform(False, architecture=architecture))
+    test = FaceDataset(test_folder.samples, make_transform(False, architecture=architecture))
     counts = np.bincount(train.targets, minlength=7)
     if np.any(counts == 0):
         raise ValueError("Every emotion must occur in the training split.")
@@ -153,7 +184,8 @@ def build_data(data_root, batch_size=128, num_workers=0, val_fraction=0.1, seed=
     train_loader = DataLoader(train, shuffle=True, generator=generator, drop_last=drop_last, **options)
     val_loader = DataLoader(val, shuffle=False, **options)
     test_loader = DataLoader(test, shuffle=False, **options)
-    settings = {"augmentation": augmentation, "batch_size": batch_size,
+    settings = {"architecture": architecture, "preprocessing": preprocessing_for(architecture),
+                "augmentation": augmentation, "batch_size": batch_size,
                 "num_workers": num_workers, "split_seed": seed, "val_fraction": val_fraction,
                 "class_weight_rule": "sqrt_inverse_frequency_normalized_mean_one",
                 "class_weights": weights.tolist()}

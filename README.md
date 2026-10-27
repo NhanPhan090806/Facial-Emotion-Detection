@@ -4,35 +4,36 @@ PyTorch implementation of the supplied lab PDF, with the later supplied architec
 image taking precedence for M1. The project trains two classifiers and runs emotion
 recognition on phone IP cameras, webcams, image files and video files.
 
-**Implementation status:** the downloaded first run measured M1 accuracy 65.99%
-and M2 accuracy 67.69%, meeting the lab's FER accuracy targets. The chosen combined
-recipes are implemented as two direct training runs; their FER gains still need measurement. Large weights
-and run outputs are excluded from Git by default. The >=10 FPS realtime requirement
-still needs verification on the demonstration laptop.
+**Implementation status:** the earlier CNN/ResNet-18 run reached 65.99%/67.69%
+test accuracy. M2 has now been replaced by AffectNet-pretrained DDAMFN; its FER
+accuracy is not measured yet. Both notebooks train each model once and export
+validation/test results. Large weights and outputs are excluded from Git.
+The >=10 FPS realtime requirement needs verification on the demonstration laptop.
 
 ## Structure
 
 ```text
 .
-├── README.md
-├── requirements.txt
-├── config.yaml
-├── notebooks/
-│   └── train.ipynb           # Local training + final evaluation of M1 and M2
-├── train_kaggle.ipynb        # Clone your Git repo, import helpers, train on Kaggle
-├── src/
-│   ├── model.py             # M1 and adapted ResNet-18
-│   ├── detector.py          # Haar face detector bundled with OpenCV
-│   ├── predict.py           # Shared preprocessing, checkpoint loading, prediction
-│   ├── app.py               # Required realtime/image/video command line
-│   ├── data.py              # Dataset, augmentation, stratified split, class weights
-│   ├── train.py             # Explicit PyTorch training loop
-│   ├── experiments.py       # Validation export + optional candidate-comparison API
-│   ├── evaluate.py          # Metrics, plots, errors and CPU model timing
-│   └── report.py            # Generate a six-page PDF from actual results
-├── weights/                 # Put cnn_best.pt and transfer_best.pt here after training
-├── tests/test_project.py    # Offline integration and regression tests
-└── report.pdf               # Generated after training; not fabricated in advance
+â”œâ”€â”€ README.md
+â”œâ”€â”€ requirements.txt
+â”œâ”€â”€ config.yaml
+â”œâ”€â”€ notebooks/
+â”‚   â””â”€â”€ train.ipynb           # Local training + final evaluation of M1 and M2
+â”œâ”€â”€ train_kaggle.ipynb        # Clone your Git repo, import helpers, train on Kaggle
+â”œâ”€â”€ src/
+â”‚   â”œâ”€â”€ model.py             # M1 and model builders (DDAMFN default for M2)
+│   ├── ddamfn.py            # Architecture, pinned download, label mapping
+â”‚   â”œâ”€â”€ detector.py          # Haar face detector bundled with OpenCV
+â”‚   â”œâ”€â”€ predict.py           # Shared preprocessing, checkpoint loading, prediction
+â”‚   â”œâ”€â”€ app.py               # Required realtime/image/video command line
+â”‚   â”œâ”€â”€ data.py              # Dataset, augmentation, stratified split, class weights
+â”‚   â”œâ”€â”€ train.py             # Explicit PyTorch training loop
+â”‚   â”œâ”€â”€ experiments.py       # Validation export + optional candidate-comparison API
+â”‚   â”œâ”€â”€ evaluate.py          # Metrics, plots, errors and CPU model timing
+â”‚   â””â”€â”€ report.py            # Generate a six-page PDF from actual results
+â”œâ”€â”€ weights/                 # Put cnn_best.pt and transfer_best.pt here after training
+â”œâ”€â”€ tests/test_project.py    # Offline integration and regression tests
+â””â”€â”€ report.pdf               # Generated after training; not fabricated in advance
 ```
 
 The original PDF is the specification; the Kaggle clone/import workflow follows
@@ -66,16 +67,16 @@ and extract it to:
 
 ```text
 data/fer2013/
-├── train/
-│   ├── angry/
-│   ├── disgust/
-│   ├── fear/
-│   ├── happy/
-│   ├── neutral/
-│   ├── sad/
-│   └── surprise/
-└── test/
-    └── ...the same seven class folders...
+â”œâ”€â”€ train/
+â”‚   â”œâ”€â”€ angry/
+â”‚   â”œâ”€â”€ disgust/
+â”‚   â”œâ”€â”€ fear/
+â”‚   â”œâ”€â”€ happy/
+â”‚   â”œâ”€â”€ neutral/
+â”‚   â”œâ”€â”€ sad/
+â”‚   â””â”€â”€ surprise/
+â””â”€â”€ test/
+    â””â”€â”€ ...the same seven class folders...
 ```
 
 You may use a different directory by editing `DATA_ROOT` in the notebook. The
@@ -98,12 +99,17 @@ The label order is alphabetical:
 This differs from the ordering in some FER CSV versions. Checkpoint metadata
 stores the mapping, and inference rejects incompatible class/preprocessing metadata.
 
-Both models use grayscale 48x48 images, tensor values in [0,1], then normalization
-with mean=0.5 and std=0.5. Training adds a horizontal flip and mild affine rotation,
-translation and scaling. Validation/test/inference use deterministic preprocessing.
-Class imbalance is handled using square-root inverse training class frequencies
-as loss weights. No weights are calculated from validation/test labels. No extra
-FER/RAF/AffectNet training data is used; M2 uses ImageNet pretraining.
+FER-2013 contains grayscale 48x48 images. M1 uses those dimensions and
+normalizes with mean/std 0.5. M2 repeats grayscale into three channels, resizes
+to 112x112, and uses ImageNet mean/std to match the official DDAMFN++ checkpoint.
+Upsampling adds no new detail. The camera app also converts crops to grayscale,
+then selects the correct transform from checkpoint metadata.
+
+Class imbalance uses square-root inverse **training** class frequencies as loss
+weights. No validation/test labels enter those weights. M2 now uses external
+**AffectNet-7 expression pretraining**, replacing the previous ImageNet ResNet-18;
+that difference must be disclosed when comparing architectures. FER fine-tuning
+uses only the original FER training split.
 
 ## The two models
 
@@ -128,23 +134,36 @@ the supplied image, rather than substituting spatial dropout.
 The diagram's final softmax is applied during prediction. Training returns raw
 logits because PyTorch `CrossEntropyLoss` already computes log-softmax internally.
 
-### M2: fine-tuned ResNet-18
+### M2: DDAMFN with DDAMFN++ AffectNet-7 initialization
 
-Start from [torchvision's ImageNet ResNet-18 weights](https://docs.pytorch.org/vision/stable/models/generated/torchvision.models.resnet18.html)
-and make these changes:
+The [official DDAMFN repository](https://github.com/SainingZhang/DDAMFN) provides
+a MixedFeatureNet face backbone and two coordinate attention heads. The heads
+learn vertical/horizontal attention maps and their elementwise maximum weights
+the face features before a seven-class linear classifier. The model has
+**4,187,421 parameters**, compared with 11,173,831 in our earlier adapted ResNet.
+Smaller parameter count alone does not establish faster CPU inference; the
+notebooks benchmark the actual 112x112 model.
 
-- Replace the RGB first convolution with a one-channel 7x7 convolution. Sum its
-  pretrained RGB filters to initialize it. For three identical normalized grayscale
-  channels, summing filters preserves the response; taking their mean would scale it down.
-- Change the initial convolution stride from 2 to 1 and remove the initial max
-  pool. Small 48x48 faces retain more spatial detail in the residual stages.
-- Replace the classification head with Dropout0.30 and Linear(512,7).
-- Fine-tune all layers with a smaller learning rate in the backbone.
+`src/ddamfn.py` implements the network in ordinary PyTorch and strictly loads the
+official `DDAMFN++/checkpoints_ver2.0/affecnet7_epoch19_acc0.671.pth` initialization.
+The source commit is `cebfe5c5969b7d1fd64ecd775e318d3834ca76bb`; its SHA-256 is
+`edf731a458162eef6b2be12c3572bd10cbe92ce8c009da4331184a2943d7ed14`.
+The download is cached under PyTorch's hub checkpoints directory and verified
+before use. There is no silent fallback to random weights on download failure.
+Only tensor state dictionaries are loaded with `weights_only=True`.
 
-The adapted model has **11,173,831 parameters**. Using 48x48 grayscale and FER
-normalization is a deliberate fine-tuning choice; these are not the stock
-224x224 RGB ImageNet transforms. Initial weights download on first training use.
-Loading a saved FER checkpoint for inference requires no download.
+AffectNet's class order is neutral/happy/sad/surprise/fear/disgust/angry.
+Classifier rows are explicitly reordered `[6,5,4,1,0,2,3]` to match our labels.
+We retain this pretrained expression head, then fine-tune all layers with a
+smaller backbone LR. We use weighted cross entropy rather than upstream SAM
+or reciprocal attention-diversity loss; this is a transfer-learning adaptation,
+not a paper reproduction. Retained unused upstream layers preserve strict
+checkpoint compatibility and are included in the parameter count.
+
+Pretrained source URL, commit, hash and class mapping are saved with the run and
+checkpoint. Saved FER checkpoints load without downloading anything. Existing
+version-1 ResNet checkpoints remain supported for inference, selected by their
+metadata; new `transfer` training defaults to DDAMFN.
 
 ## Train locally: one run per model
 
@@ -154,33 +173,38 @@ or REFERENCE_RESULTS_ROOTS. Both notebooks use the same fixed configurations:
 
 | Setting | M1 | M2 |
 | --- | --- | --- |
-| Architecture | Exact supplied CNN | Adapted ImageNet ResNet-18 |
+| Architecture | Exact supplied CNN | DDAMFN / DDAMFN++ AffectNet-7 |
 | Epoch limit | 80 | 40 |
-| Augmentation | gentle_combined | occlusion |
-| Head LR | 1e-3 | 1e-3 |
-| Backbone LR | n/a | 5e-5 |
-| Weight decay | 1e-4 | 5e-4 |
-| Early-stopping patience | 18 | 12 |
-| Label smoothing | 0.05 | 0.05 |
+| Augmentation | gentle_combined | fer_moderate |
+| Head LR | 1e-3 | 1e-4 |
+| Backbone LR | n/a | 1e-5 |
+| Weight decay | 1e-4 | 1e-4 |
+| Early-stopping patience | 18 | 10 |
+| Label smoothing | 0.05 | 0.02 |
 
 M1 combines horizontal flips, reflect-padded 2-pixel crops, rotation up to 8 degrees,
 scaling 0.95-1.05, and brightness/contrast jitter 0.08 with probability 0.5.
 Crop shifts replace affine translation. No extra dropout or erasing is added.
-M2 combines flips, mild affine changes, lighting jitter 0.15, and small erasures
-with probability 0.10 and area 2-6%. These are the proposed combined recipes;
-they are not yet proven to beat earlier runs on FER test data.
+M2 combines horizontal flips, rotation up to 10 degrees, shifts up to 5%,
+scale 0.95-1.05, brightness/contrast jitter 0.15 with probability 0.7, and small
+erasures with probability 0.15 covering 1-4% of the image. Augmentation starts
+at 48x48, before resizing. This is moderate augmentation: stronger crops or
+occlusions can erase the eyes/mouth cues needed for the label. M1's successful
+gentle recipe is retained. These settings still need a full FER validation run.
+M2's backbone LR ramps up over its first two epochs, then follows cosine decay.
 
 Both use AdamW, cosine LR decay, moderate square-root inverse-frequency loss
 weights and gradient clipping at norm 5. Oversampling is not added. GPU training
-uses AMP; validation and deployment use float32. Validation accuracy selects the
+uses AMP; validation and deployment use float32. Histories record successful
+optimizer updates and any updates skipped by AMP while adjusting its scale. Validation accuracy selects the
 best epoch; macro F1 breaks exact ties. Train/validation membership is fixed with
 seed 42, and test images are evaluated only after training.
 
-Batch size defaults to 128 and NUM_WORKERS to zero. The latter avoids notebook
+Batch size defaults to 128 for M1 and is capped at 64 for M2; NUM_WORKERS is zero. The latter avoids notebook
 worker cleanup errors and does not disable GPU training. Logs print one summary
 per epoch. Validation/test/inference preprocessing has no random augmentation.
 
-Local outputs are under `runs/fer2013_final/`: both model histories, best/last
+Local outputs are under `runs/fer2013_ddamfn/`: both model histories, best/last
 checkpoints, validation diagnostics, final test metrics, copied deployment weights
 and a report draft. Copy the reviewed weights into project-level `weights/` for
 `config.yaml` to use them. A training cell starts fresh and overwrites that model's
@@ -203,13 +227,13 @@ for the historical diagnosis and comparison settings.
    If more than one candidate exists, set `DATA_ROOT_OVERRIDE` explicitly.
 5. Run all cells. Both models train through the cloned `src` helpers. The
    notebook records the Git commit and writes results under `/kaggle/working`.
-6. Download `fer2013_final.zip`. After reviewing the measured results, copy its `weights/cnn_best.pt` and
+6. Download `fer2013_ddamfn.zip`. After reviewing the measured results, copy its `weights/cnn_best.pt` and
    `weights/transfer_best.pt` into this project's `weights/` directory.
 
-Kaggle defaults to batch size 128 and zero data-loader workers. Reduce batch size
+Kaggle uses batch size 128 for M1, up to 64 for M2, and zero data-loader workers. Reduce batch size
 if memory is insufficient. A second GPU is not required. On rerun, the notebook
 reuses the clone and verifies its origin; it does not silently pull or reset files.
-Start a fresh session or explicitly update the clone and restart its kernel to use a newer commit. The notebook checks that the new experiments helper exists.
+Start a fresh session or explicitly update the clone and restart its kernel to use a newer commit. The notebook checks that the new DDAMFN helper exists. The pinned pretrained checkpoint is downloaded and verified before M1 training starts.
 
 The PDF requires an executed `notebooks/train.ipynb` with outputs. Downloading the
 executed Kaggle notebook does not execute the separate local notebook. Run the
@@ -218,31 +242,31 @@ and retain the executed version at the required submission path.
 
 ## Evaluation artifacts
 
-Under RUN_ROOT (`runs/fer2013_final` locally; `/kaggle/working/fer2013_final` on Kaggle):
+Under RUN_ROOT (`runs/fer2013_ddamfn` locally; `/kaggle/working/fer2013_ddamfn` on Kaggle):
 
 ```text
 outputs/
-├── class_distribution.png
-├── split_manifest.json
-├── comparison.csv / comparison.json
-├── cnn/
-│   ├── best.pt / last.pt
-│   ├── config.json / data_config.json / training_summary.json
-│   ├── validation_metrics.json
-│   ├── validation_predictions.csv / validation_classification_report.json
-│   ├── validation_confusion_matrix.csv
-│   ├── class_counts.json / split_manifest.json
-│   ├── history.csv / training_curves.png
-│   ├── metrics.json / classification_report.json
-│   ├── confusion_matrix.csv / confusion_matrix.png
-│   ├── predictions.csv / misclassified.png
-│   └── error_analysis.md
-└── transfer/
-    └── ...same artifacts...
+â”œâ”€â”€ class_distribution.png
+â”œâ”€â”€ split_manifest.json
+â”œâ”€â”€ comparison.csv / comparison.json
+â”œâ”€â”€ cnn/
+â”‚   â”œâ”€â”€ best.pt / last.pt
+â”‚   â”œâ”€â”€ config.json / data_config.json / training_summary.json
+â”‚   â”œâ”€â”€ validation_metrics.json
+â”‚   â”œâ”€â”€ validation_predictions.csv / validation_classification_report.json
+â”‚   â”œâ”€â”€ validation_confusion_matrix.csv
+â”‚   â”œâ”€â”€ class_counts.json / split_manifest.json
+â”‚   â”œâ”€â”€ history.csv / training_curves.png
+â”‚   â”œâ”€â”€ metrics.json / classification_report.json
+â”‚   â”œâ”€â”€ confusion_matrix.csv / confusion_matrix.png
+â”‚   â”œâ”€â”€ predictions.csv / misclassified.png
+â”‚   â””â”€â”€ error_analysis.md
+â””â”€â”€ transfer/
+    â””â”€â”€ ...same artifacts...
 ```
 
 M3 contains test accuracy, macro F1, parameter count and CPU inference FPS. The CPU
-benchmark uses batch size one, 48x48 grayscale, float32 and four threads, with
+benchmark uses batch size one, each model's native input shape (1x48x48 or 3x112x112), float32 and four threads, with
 warm-up passes. It times **model forward only**, excluding image preprocessing,
 face detection and camera latency. It is not proof that the full application runs
 at 10 FPS. Timing hardware, scope and thread count are saved in the metrics.
@@ -304,10 +328,10 @@ Without a real demo screenshot, page six is explicitly marked pending. Add
 your own image-specific error discussion in `src/report.py`, then regenerate:
 
 ```powershell
-python -m src.report --results runs/fer2013_final/outputs --output runs/fer2013_final/report.pdf --screenshot outputs/demo_screenshot.jpg --author "Your name / student ID"
+python -m src.report --results runs/fer2013_ddamfn/outputs --output runs/fer2013_ddamfn/report.pdf --screenshot outputs/demo_screenshot.jpg --author "Your name / student ID"
 ```
 
-For a Kaggle run, extract the archive into `runs/fer2013_final/` first. Include
+For a Kaggle run, extract the archive into `runs/fer2013_ddamfn/` first. Include
 data/preprocessing, both architectures, hyperparameters, actual M3 results,
 confusion matrices, ten errors per model and a phone-camera screenshot. Verify
 both required commands and the >=10 CPU FPS requirement on the demonstration

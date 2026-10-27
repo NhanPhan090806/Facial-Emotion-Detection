@@ -14,7 +14,7 @@ import torch
 from PIL import Image
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, f1_score
 
-from src.data import CLASS_NAMES
+from src.data import CLASS_NAMES, preprocessing_for
 from src.model import count_parameters
 from src.predict import load_checkpoint
 from src.train import resolve_device
@@ -63,7 +63,7 @@ def plot_history(history_path, output_path=None):
     return output_path
 
 
-def benchmark_cpu(model, warmup=10, iterations=100, num_threads=4):
+def benchmark_cpu(model, warmup=10, iterations=100, num_threads=4, architecture="cnn"):
     """Single-face, batch-one forward passes; excludes detection and preprocessing."""
     if iterations < 1 or warmup < 0 or num_threads < 1:
         raise ValueError("Invalid benchmark settings.")
@@ -73,7 +73,9 @@ def benchmark_cpu(model, warmup=10, iterations=100, num_threads=4):
     try:
         torch.set_num_threads(num_threads)
         model.to("cpu").eval()
-        example = torch.zeros(1, 1, 48, 48)
+        spec = preprocessing_for(architecture)
+        shape = (spec["channels"], spec["image_size"], spec["image_size"])
+        example = torch.zeros(1, *shape)
         with torch.inference_mode():
             for _ in range(warmup):
                 model(example)
@@ -84,7 +86,7 @@ def benchmark_cpu(model, warmup=10, iterations=100, num_threads=4):
         return {"cpu_model_fps": iterations / elapsed, "cpu_model_ms": elapsed * 1000 / iterations,
                 "benchmark_iterations": iterations, "cpu_threads": num_threads,
                 "cpu": platform.processor() or platform.machine(),
-                "benchmark_scope": "CPU model forward only; batch=1, 1x48x48, float32; excludes face detection, I/O and preprocessing"}
+                "benchmark_scope": f"CPU model forward only; batch=1, {shape}, float32; excludes face detection, I/O and preprocessing"}
     finally:
         model.to(old_device).train(old_training)
         torch.set_num_threads(old_threads)
@@ -116,6 +118,8 @@ def evaluate_checkpoint(checkpoint_path, data, output_dir=None, device="auto", b
     model, checkpoint = load_checkpoint(checkpoint_path, device)
     output_dir = Path(output_dir or Path(checkpoint_path).parent)
     output_dir.mkdir(parents=True, exist_ok=True)
+    if data.settings.get("preprocessing", preprocessing_for()) != checkpoint["preprocessing"]:
+        raise ValueError("Evaluation loaders must use this checkpoint's preprocessing architecture.")
     targets, predictions, probabilities = [], [], []
     for images, labels in data.test_loader:
         scores = model(images.to(device)).softmax(dim=1).cpu()
@@ -126,12 +130,12 @@ def evaluate_checkpoint(checkpoint_path, data, output_dir=None, device="auto", b
     accuracy = float(accuracy_score(targets, predictions))
     target_accuracy = 0.60 if checkpoint["model_name"] == "cnn" else 0.65
     metrics = {
-        "model": checkpoint["model_name"], "test_accuracy": accuracy,
+        "model": checkpoint["model_name"], "architecture": checkpoint["architecture"], "test_accuracy": accuracy,
         "test_macro_f1": float(f1_score(targets, predictions, labels=range(7), average="macro", zero_division=0)),
         "parameters": count_parameters(model), "test_images": len(targets),
         "best_epoch": checkpoint["epoch"], "target_accuracy": target_accuracy,
         "target_met": accuracy >= target_accuracy,
-        **benchmark_cpu(model, iterations=benchmark_iterations),
+        **benchmark_cpu(model, iterations=benchmark_iterations, architecture=checkpoint["architecture"]),
     }
     save_json(metrics, output_dir / "metrics.json")
     report = classification_report(targets, predictions, labels=list(range(7)),

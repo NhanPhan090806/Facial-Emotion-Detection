@@ -6,7 +6,6 @@ python -m src.report --results outputs --output report.pdf --screenshot outputs/
 import argparse
 import csv
 import json
-import textwrap
 from pathlib import Path
 
 import matplotlib
@@ -26,6 +25,29 @@ def build_report(results_dir, output_path="report.pdf", screenshot=None, author=
     configs = {name: read_json(results_dir / name / "config.json") for name in metrics}
     counts = read_json(results_dir / "cnn" / "class_counts.json")
     summaries = {name: read_json(results_dir / name / "training_summary.json") for name in metrics}
+    is_ddam = configs["transfer"].get("architecture", "resnet18") == "ddamfn"
+    pretrained = configs["transfer"].get("pretrained", False)
+    initialization = (
+        "M2 starts from the official DDAMFN++ AffectNet-7 checkpoint; this uses external "
+        "expression-labeled pretraining. No extra data is mixed into FER fine-tuning."
+        if is_ddam and pretrained else
+        "M2 uses ImageNet-1K pretraining." if pretrained else
+        "M2 was initialized without pretrained weights in this run."
+    )
+    transfer_preprocessing = (
+        "M2: repeat grayscale to three channels, resize to 112x112; use ImageNet mean/std "
+        "to match the pretrained model. Upsampling adds no image detail."
+        if is_ddam else "M2 uses the same 48x48 grayscale normalization as M1."
+    )
+    transfer_method = (
+        "M2: DDAMFN with mixed-kernel depthwise face features and two coordinate attention "
+        "heads, then a seven-class linear output. AffectNet classifier rows are remapped "
+        "to our emotion order. Fine-tune all layers with weighted cross entropy; this is "
+        "not a reproduction of the upstream SAM/attention-diversity training recipe."
+        if is_ddam else
+        "M2: adapted ResNet-18 with a single-channel stride-one stem, no initial max pool, "
+        "and Dropout0.30-Linear7 head. Fine-tune every layer."
+    )
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     def page(title, number):
@@ -35,23 +57,22 @@ def build_report(results_dir, output_path="report.pdf", screenshot=None, author=
         fig.text(0.91, 0.025, str(number), fontsize=8, color="0.4")
         return fig
 
-    def paragraph(fig, text, y, size=10, width=102):
+    def paragraph(fig, text, y, size=10):
         lines = []
         renderer = fig.canvas.get_renderer()
         font = FontProperties(size=size)
         available_width = fig.bbox.width * 0.84
         for line in text.split("\n"):
-            for chunk in textwrap.wrap(line, width=width) if line else [""]:
-                current = ""
-                for word in chunk.split():
-                    candidate = f"{current} {word}".strip()
-                    pixels = renderer.get_text_width_height_descent(candidate, font, ismath=False)[0]
-                    if pixels > available_width and current:
-                        lines.append(current)
-                        current = word
-                    else:
-                        current = candidate
-                lines.append(current)
+            current = ""
+            for word in line.split():
+                candidate = f"{current} {word}".strip()
+                pixels = renderer.get_text_width_height_descent(candidate, font, ismath=False)[0]
+                if pixels > available_width and current:
+                    lines.append(current)
+                    current = word
+                else:
+                    current = candidate
+            lines.append(current)
         fig.text(0.08, y, "\n".join(lines), va="top", fontsize=size, linespacing=1.4)
         return y - len(lines) * (size / 72 / 11.69) * 1.4
 
@@ -67,7 +88,7 @@ def build_report(results_dir, output_path="report.pdf", screenshot=None, author=
         fig = page("Facial emotion recognition - methods", 1)
         y = paragraph(fig,
             "Data: msambare/fer2013 on Kaggle. Seven emotions; grayscale 48 x 48 pixels. "
-            "No supplementary training dataset is used. ResNet-18 starts from ImageNet-1K weights.\n\n"
+            f"{initialization}\n\n"
             "Split protocol: validation is stratified from the original training folder; the supplied "
             "test folder is reserved for final evaluation. The saved split manifests record every file "
             "and label. Model selection uses validation accuracy, with macro F1 as a tie-breaker.", 0.90)
@@ -75,21 +96,17 @@ def build_report(results_dir, output_path="report.pdf", screenshot=None, author=
                       ".\nClass order: angry, disgust, fear, happy, neutral, sad, surprise.", y - 0.01)
         picture(fig, results_dir / "class_distribution.png", [0.08, 0.48, 0.84, 0.22])
         paragraph(fig,
-            "Preprocessing: convert to grayscale, resize to 48 x 48, scale pixels to [0,1], then "
-            "normalize with mean=0.5 and std=0.5. Training adds horizontal flips and mild affine "
-            "rotation, shift and scale. Validation, test and realtime inference use no augmentation. "
-            "Square-root inverse class-frequency loss weights are derived only from training labels. "
-            "Lighting profiles add brightness/contrast jitter; occlusion adds small random erasing. "
-            "Gentle combined uses reflect-padded crops, smaller affine changes and occasional mild jitter. "
+            "Preprocessing M1: grayscale 48x48, scale to [0,1], normalize mean/std 0.5. "
+            f"{transfer_preprocessing} Validation, test and realtime inference use deterministic "
+            "preprocessing. Square-root inverse training class frequencies weight the loss. "
+            "M1 gentle combined: flip, reflect-padded crops, small affine changes and mild jitter. "
+            "M2 fer_moderate: flip, small affine changes, occasional lighting jitter and small erasures. "
             f"Selected profiles: M1={configs['cnn'].get('augmentation', 'baseline')}, "
             f"M2={configs['transfer'].get('augmentation', 'baseline')}.\n\n"
-            "M1 (from scratch): four Conv3x3-BatchNorm-ReLU-MaxPool2x2-Dropout blocks, with "
-            "32/64/128/256 channels and dropout 0.10/0.15/0.20/0.25. Flatten 3x3x256=2304, "
+            "M1: four Conv3x3-BatchNorm-ReLU-MaxPool2x2-Dropout blocks, with "
+            "32/64/128/256 channels and dropout 0.10/0.15/0.20/0.25. Flatten 2304, "
             "Linear256-BatchNorm-ReLU-Dropout0.50, then Linear7.\n\n"
-            "M2 (transfer): ImageNet ResNet-18; sum the first convolution's RGB weights to accept "
-            "one channel, set its stride to 1 and remove the initial max pool to preserve small-image "
-            "detail. Replace the head with Dropout0.30-Linear7 and fine-tune every layer. The input "
-            "normalization is deliberately adapted for FER, rather than the stock ImageNet transform.\n\n"
+            f"{transfer_method}\n\n"
             "Both models return logits for cross entropy; softmax is applied at inference.", 0.46, size=9.5)
         pdf.savefig(fig); plt.close(fig)
 
@@ -113,7 +130,8 @@ def build_report(results_dir, output_path="report.pdf", screenshot=None, author=
                            loc="center", cellLoc="center")
         table.auto_set_font_size(False); table.set_fontsize(8); table.scale(1, 1.6)
         paragraph(fig, "Targets: M1 >= 60%, M2 >= 65%. CPU FPS is batch-one model forward only "
-                  "(float32, 1x48x48); it excludes preprocessing, face detection and camera I/O. "
+                  f"(float32; M1 1x48x48, M2 {'3x112x112' if is_ddam else '1x48x48'}); "
+                  "it excludes preprocessing, face detection and camera I/O. "
                   "Realtime throughput must be measured separately on the demonstration laptop. "
                   f"Benchmark CPU: {metrics['cnn']['cpu']}, threads={metrics['cnn']['cpu_threads']}.", 0.61, size=9)
         picture(fig, results_dir / "cnn" / "training_curves.png", [0.08, 0.31, 0.84, 0.23])
@@ -134,10 +152,10 @@ def build_report(results_dir, output_path="report.pdf", screenshot=None, author=
             paragraphs = [f"{i+1}. {row['true']} -> {row['predicted']}. {row['comment']}"
                           for i, row in enumerate(errors)]
             paragraph(fig, "\n\n".join(paragraphs) if errors else "No test errors were observed.",
-                      0.55, size=8.2, width=115)
+                      0.55, size=8.2)
             paragraph(fig, "Observations above describe score errors and suggest visual checks. Add your "
                       "own image-specific observations before submission; score patterns alone cannot "
-                      "establish why a face was misclassified.", 0.085, size=8, width=115)
+                      "establish why a face was misclassified.", 0.085, size=8)
             pdf.savefig(fig); plt.close(fig)
 
         fig = page("Realtime system and demonstration", 6)
@@ -163,8 +181,10 @@ def build_report(results_dir, output_path="report.pdf", screenshot=None, author=
             "a person's internal emotional state. Haar detection is strongest on frontal faces. "
             "Lighting, pose, occlusion and the FER-to-phone domain shift can reduce accuracy. "
             "Softmax scores are model confidence values, not calibrated probabilities.\n\n"
-            "Sources: kaggle.com/datasets/msambare/fer2013; torchvision ImageNet ResNet-18 "
-            "(docs.pytorch.org/vision/stable/models/generated/torchvision.models.resnet18.html). "
+            "Sources: kaggle.com/datasets/msambare/fer2013; "
+            + ("github.com/SainingZhang/DDAMFN (DDAMFN++ AffectNet-7); pinned source revision "
+               "and weight SHA-256 are recorded in pretrained_source.json. " if is_ddam else
+               "torchvision ImageNet ResNet-18 documentation. ") +
             "Checkpoints, split manifests, class counts, run configuration, CSV metrics and error "
             "examples accompany the experiment for reproducibility.", 0.23, size=9)
         pdf.savefig(fig); plt.close(fig)

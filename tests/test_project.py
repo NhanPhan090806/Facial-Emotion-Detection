@@ -25,8 +25,8 @@ from PIL import Image
 from torchvision.models import resnet18
 
 from src.app import annotate_frame, main
-from src.data import CLASS_NAMES, build_data, make_transform
-from src.model import EmotionCNN, build_resnet18
+from src.data import CLASS_NAMES, build_data, make_transform, preprocessing_for
+from src.model import EmotionCNN, build_resnet18, build_model
 from src.predict import EmotionPredictor, load_checkpoint
 from src.train import TrainConfig, fit
 from src.experiments import accuracy_recipes, run_accuracy_experiments, select_candidate, verify_split
@@ -82,6 +82,98 @@ class ProjectTests(unittest.TestCase):
         adapted.eval()
         with torch.inference_mode():
             self.assertEqual(tuple(adapted(torch.zeros(2, 1, 48, 48)).shape), (2, 7))
+
+    def test_ddam_preprocessing_split_and_gradient(self):
+        data = build_data(self.data_root, batch_size=8, val_fraction=0.25,
+                          architecture="ddamfn", augmentation="fer_moderate")
+        cnn = build_data(self.data_root, batch_size=8, val_fraction=0.25)
+        self.assertEqual(data.val.samples, cnn.val.samples)
+        self.assertEqual(data.train.samples, cnn.train.samples)
+        image = Image.fromarray(np.arange(2304, dtype=np.uint8).reshape(48, 48))
+        spec = preprocessing_for("ddamfn")
+        mean = torch.tensor(spec["mean"])[:, None, None]
+        std = torch.tensor(spec["std"])[:, None, None]
+        for training in [False, True]:
+            transform = make_transform(training, "fer_moderate", architecture="ddamfn")
+            value = transform(image)
+            self.assertEqual(tuple(value.shape), (3, 112, 112))
+            restored = value * std + mean
+            torch.testing.assert_close(restored[0], restored[1])
+            torch.testing.assert_close(restored[1], restored[2])
+        reference = make_transform(architecture="ddamfn")(image)
+        torch.testing.assert_close(reference, make_transform(False, "fer_moderate", "ddamfn")(image))
+        model = build_model("transfer", pretrained=False).train()
+        logits, heads = model.forward_with_attention(torch.randn(2, 3, 112, 112))
+        self.assertEqual(tuple(logits.shape), (2, 7))
+        self.assertEqual(len(heads), 2)
+        loss = torch.nn.functional.cross_entropy(logits, torch.tensor([0, 1]))
+        loss.backward()
+        self.assertTrue(torch.isfinite(model.features[0].conv.weight.grad).all())
+        self.assertTrue(torch.isfinite(model.cat_head0.CoordAtt.conv1.weight.grad).all())
+
+    def test_legacy_resnet_checkpoint_and_preprocessing_rejection(self):
+        model = build_resnet18(pretrained=False).eval()
+        path = self.work / "legacy_resnet.pt"
+        checkpoint = {"format_version": 1, "model_name": "transfer", "class_names": CLASS_NAMES,
+                      "preprocessing": preprocessing_for("resnet18"), "model_state": model.state_dict()}
+        torch.save(checkpoint, path)
+        restored, metadata = load_checkpoint(path)
+        self.assertEqual(metadata["architecture"], "resnet18")
+        with torch.inference_mode():
+            x = torch.randn(2, 1, 48, 48)
+            torch.testing.assert_close(restored(x), model(x))
+        checkpoint["architecture"] = "ddamfn"
+        torch.save(checkpoint, path)
+        with self.assertRaisesRegex(ValueError, "preprocessing"):
+            load_checkpoint(path)
+
+    @unittest.skipUnless((ROOT / "tmp/ddamfn_upstream/affectnet7.pth").is_file(),
+                         "Optional verified upstream checkpoint is not cached locally")
+    def test_real_ddam_pretraining_mapping_and_offline_reload(self):
+        from src.ddamfn import CLASS_ROW_ORDER, PRETRAINED_SHA256, download_pretrained
+        path = ROOT / "tmp/ddamfn_upstream/affectnet7.pth"
+        model = build_model("transfer", pretrained=True, pretrained_path=path).eval()
+        official = torch.load(path, map_location="cpu", weights_only=True)["model_state_dict"]
+        torch.testing.assert_close(model.fc.weight, official["fc.weight"][CLASS_ROW_ORDER])
+        torch.testing.assert_close(model.features[0].conv.weight, official["features.0.conv.weight"])
+        self.assertEqual(model.pretrained_source["sha256"], PRETRAINED_SHA256)
+        checkpoint = {"format_version": 2, "model_name": "transfer", "architecture": "ddamfn",
+                      "class_names": CLASS_NAMES, "preprocessing": preprocessing_for("ddamfn"),
+                      "model_state": model.state_dict(), "pretrained_source": model.pretrained_source}
+        saved = self.work / "pretrained_ddam.pt"
+        torch.save(checkpoint, saved)
+        with patch("src.ddamfn.download_pretrained", side_effect=AssertionError("Inference downloaded weights")):
+            restored, metadata = load_checkpoint(saved)
+        x = torch.randn(2, 3, 112, 112)
+        with torch.inference_mode():
+            torch.testing.assert_close(model(x), restored(x))
+        # Exercise the real pretrained initialization, weighted objective and LR ramp together.
+        data = build_data(self.data_root, batch_size=14, val_fraction=0.25,
+                          architecture="ddamfn", augmentation="fer_moderate")
+        config = TrainConfig(model_name="transfer", architecture="ddamfn", epochs=3,
+                             warmup_epochs=2, pretrained=True, pretrained_path=str(path),
+                             augmentation="fer_moderate", learning_rate=1e-4, backbone_lr=1e-5,
+                             label_smoothing=0.02, device="cuda" if torch.cuda.is_available() else "cpu",
+                             cpu_threads=2)
+        with contextlib.redirect_stdout(io.StringIO()):
+            run = fit(config, data, self.work / "real_pretrained_fit")
+        for row in run["history"]:
+            epoch = row["epoch"]
+            expected_lr = 1e-5 * min(1.0, epoch / 2) * (1 + np.cos(np.pi * (epoch-1) / 3)) / 2
+            self.assertAlmostEqual(row["backbone_learning_rate"], expected_lr)
+            self.assertTrue(np.isfinite(row["train_objective_loss"]))
+            self.assertTrue(np.isfinite(row["val_loss"]))
+        self.assertGreater(sum(row["train_optimizer_steps"] for row in run["history"]), 0)
+        last, _ = load_checkpoint(self.work / "real_pretrained_fit/last.pt")
+        self.assertFalse(torch.equal(last.fc.weight, model.fc.weight))
+        trained, metadata = load_checkpoint(run["checkpoint"])
+        self.assertEqual(metadata["pretrained_source"]["sha256"], PRETRAINED_SHA256)
+        with torch.inference_mode():
+            self.assertTrue(torch.isfinite(trained(x)).all())
+        broken = self.work / "corrupt.pth"
+        broken.write_bytes(b"invalid checkpoint")
+        with self.assertRaisesRegex(ValueError, "checksum"):
+            download_pretrained(broken)
 
     def test_split_and_weights_do_not_use_test(self):
         data = build_data(self.work, batch_size=8, val_fraction=0.25)
@@ -159,9 +251,10 @@ class ProjectTests(unittest.TestCase):
 
     @unittest.skipUnless(torch.cuda.is_available(), "CUDA unavailable")
     def test_cuda_mixed_precision_training(self):
-        data = build_data(self.data_root, batch_size=14, val_fraction=0.25)
         with contextlib.redirect_stdout(io.StringIO()):
             for name in ["cnn", "transfer"]:
+                architecture = "cnn" if name == "cnn" else "ddamfn"
+                data = build_data(self.data_root, batch_size=7, val_fraction=0.25, architecture=architecture)
                 config = TrainConfig(model_name=name, epochs=1, device="cuda", amp=True,
                                      pretrained=False, cpu_threads=2)
                 result = fit(config, data, self.work / "cuda" / name)
@@ -224,7 +317,7 @@ class ProjectTests(unittest.TestCase):
                               "BATCH_SIZE = 8\nNUM_WORKERS = 0\nVAL_FRACTION = 0.25\nSEED = 42\n"
                               "")
                 source = source.replace("epochs=80", "epochs=1").replace("epochs=40", "epochs=1")
-                source = source.replace("pretrained=True", "pretrained=False")
+                source = source.replace("pretrained=True", "pretrained=False").replace("warmup_epochs=2", "warmup_epochs=0")
                 source = source.replace('device="auto"', 'device="cpu"')
                 exec(compile(source, "notebooks/train.ipynb", "exec"), namespace)
         epoch_lines = [line for line in log.getvalue().splitlines() if line.startswith("Epoch ")]
@@ -260,6 +353,14 @@ class ProjectTests(unittest.TestCase):
         with torch.inference_mode():
             expected = predictor.model(make_transform()(Image.fromarray(face[:, :, 0])).unsqueeze(0)).softmax(1)[0]
         torch.testing.assert_close(torch.tensor(result["probabilities"]), expected)
+        transfer_predictor = EmotionPredictor(self.work / "weights/transfer_best.pt")
+        transfer_result = transfer_predictor.predict(face)
+        self.assertAlmostEqual(sum(transfer_result["probabilities"]), 1.0, places=6)
+        self.assertEqual(tuple(transfer_predictor.transform(Image.fromarray(face)).shape), (3, 112, 112))
+        with torch.inference_mode():
+            expected = transfer_predictor.model(make_transform(architecture="ddamfn")(
+                Image.fromarray(face[:, :, 0])).unsqueeze(0)).softmax(1)[0]
+        torch.testing.assert_close(torch.tensor(transfer_result["probabilities"]), expected)
         # Multiple detector boxes produce multiple face classifications.
         detector = type("Detector", (), {"detect": lambda _, frame: [(0, 0, 40, 40), (20, 20, 60, 60)]})()
         _, results = annotate_frame(face.copy(), detector, predictor, 0.4)

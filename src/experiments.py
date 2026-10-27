@@ -10,8 +10,9 @@ import numpy as np
 import torch
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, f1_score
 
-from src.data import CLASS_NAMES, build_data
+from src.data import CLASS_NAMES, build_data, preprocessing_for
 from src.predict import load_checkpoint
+from src.model import model_architecture
 from src.train import TrainConfig, fit, resolve_device
 
 
@@ -23,7 +24,7 @@ def accuracy_recipes(model_name, seed=42, device="auto", stage=3):
     """
     if model_name not in {"cnn", "transfer"}:
         raise ValueError("Choose cnn or transfer.")
-    baseline = TrainConfig(model_name=model_name, epochs=80 if model_name == "cnn" else 20,
+    baseline = TrainConfig(model_name=model_name, architecture="cnn" if model_name == "cnn" else "resnet18", epochs=80 if model_name == "cnn" else 20,
                            pretrained=model_name == "transfer", seed=seed, device=device,
                            patience=18 if model_name == "cnn" else 12)
     if stage == 2:
@@ -78,6 +79,7 @@ def read_archive(root, model_name):
         if metadata.get("model_name") != model_name:
             raise ValueError("Archived checkpoint model name does not match its requested model.")
         config = metadata["config"]
+    config.setdefault("architecture", "cnn" if model_name == "cnn" else "resnet18")
     return {"source": source, "checkpoint": checkpoint_path, "manifest": manifest_path,
             "config": config, "metadata": metadata}
 
@@ -115,6 +117,8 @@ def validate_checkpoint(checkpoint_path, data, output_dir, device="auto"):
     """Full-precision validation predictions, including per-class diagnostics."""
     device = resolve_device(device)
     model, checkpoint = load_checkpoint(checkpoint_path, device)
+    if data.settings.get("preprocessing", preprocessing_for()) != checkpoint["preprocessing"]:
+        raise ValueError("Validation loaders must use the checkpoint's preprocessing architecture.")
     truth, predictions, confidences = [], [], []
     loss_sum = 0.0
     for images, labels in data.val_loader:
@@ -169,6 +173,8 @@ def run_accuracy_experiments(model_name, data_root, output_root, batch_size=128,
     Completed matching experiments are reused; interrupted fits cannot resume.
     """
     recipes = accuracy_recipes(model_name, seed, device) if recipes is None else recipes
+    recipes = {name: replace(config, architecture=model_architecture(model_name, config.architecture))
+               for name, config in recipes.items()}
     if "baseline" not in recipes:
         raise ValueError("Include baseline in the candidate recipes.")
     output_root = Path(output_root)
@@ -186,7 +192,8 @@ def run_accuracy_experiments(model_name, data_root, output_root, batch_size=128,
         if config.model_name != model_name or name in {"", ".", ".."} or "/" in name or "\\" in name:
             raise ValueError("Invalid candidate name or model configuration.")
         data = build_data(data_root, batch_size=batch_size, num_workers=num_workers,
-                          val_fraction=val_fraction, seed=split_seed, augmentation=config.augmentation)
+                          val_fraction=val_fraction, seed=split_seed, augmentation=config.augmentation,
+                          architecture=model_architecture(model_name, config.architecture))
         candidate_dir = experiment_root / name
         candidate_dir.mkdir(parents=True, exist_ok=True)
         reused_baseline = name == "baseline" and baseline_results_root is not None
@@ -194,6 +201,7 @@ def run_accuracy_experiments(model_name, data_root, output_root, batch_size=128,
             archive = reference_source if reference_source is not None else read_archive(baseline_results_root, model_name)
             verify_split(archive["manifest"], data)
             old_config = archive["config"]
+            old_config = {**asdict(TrainConfig()), **old_config}
             # The first run predates the augmentation key; that means baseline.
             expected = asdict(config)
             ignored = {"device", "cpu_threads", "amp"}

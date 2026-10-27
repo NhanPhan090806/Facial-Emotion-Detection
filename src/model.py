@@ -1,4 +1,4 @@
-"""M1 matches the supplied architecture; M2 fine-tunes ImageNet ResNet-18."""
+"""M1 matches the supplied architecture; M2 fine-tunes AffectNet-pretrained DDAMFN."""
 
 import torch
 from torch import nn
@@ -68,10 +68,24 @@ def build_resnet18(pretrained: bool = True, num_classes: int = 7) -> nn.Module:
     return model
 
 
-def build_model(name: str, pretrained: bool = False) -> nn.Module:
+def model_architecture(name, architecture=None):
+    if name not in {"cnn", "transfer"}:
+        raise ValueError("Choose model 'cnn' or 'transfer'.")
+    architecture = architecture or ("cnn" if name == "cnn" else "ddamfn")
+    if architecture not in ({"cnn"} if name == "cnn" else {"ddamfn", "resnet18"}):
+        raise ValueError(f"Unsupported architecture {architecture!r} for {name}.")
+    return architecture
+
+
+def build_model(name: str, pretrained: bool = False, architecture=None, pretrained_path=None) -> nn.Module:
+    architecture = model_architecture(name, architecture)
     if name == "cnn":
         return EmotionCNN()
-    if name == "transfer":
+    if architecture == "ddamfn":
+        from src.ddamfn import DDAMFN, load_affectnet_weights
+        model = DDAMFN()
+        return load_affectnet_weights(model, pretrained_path) if pretrained else model
+    if architecture == "resnet18":
         return build_resnet18(pretrained=pretrained)
     raise ValueError(f"Unknown model {name!r}; choose 'cnn' or 'transfer'.")
 
