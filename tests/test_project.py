@@ -281,9 +281,9 @@ class ProjectTests(unittest.TestCase):
         archived_config.pop("augmentation")
         (archive_root / "cnn/config.json").write_text(json.dumps(archived_config), encoding="utf-8")
         compact_root = self.work / "compact"
-        (compact_root / "weights").mkdir(parents=True)
+        (compact_root / "models").mkdir(parents=True)
         (compact_root / "outputs").mkdir()
-        shutil.copy2(archive_root / "cnn/best.pt", compact_root / "weights/cnn_best.pt")
+        shutil.copy2(archive_root / "cnn/best.pt", compact_root / "models/cnn_best.pt")
         shutil.copy2(archive_root / "cnn/split_manifest.json", compact_root / "outputs/split_manifest.json")
         with contextlib.redirect_stdout(io.StringIO()), patch("src.experiments.fit", side_effect=AssertionError("Unexpected retraining")):
             imported = run_accuracy_experiments(
@@ -312,20 +312,23 @@ class ProjectTests(unittest.TestCase):
                 if "DATA_ROOT = PROJECT_ROOT" in source:
                     source = (f"DATA_ROOT = Path({str(self.data_root)!r})\n"
                               f"OUTPUT_ROOT = Path({str(self.work / 'outputs')!r})\n"
-                              f"WEIGHTS_DIR = Path({str(self.work / 'weights')!r})\n"
+                              f"MODELS_DIR = Path({str(self.work / 'models')!r})\n"
                               f"REPORT_PATH = Path({str(self.work / 'report.pdf')!r})\n"
-                              "BATCH_SIZE = 8\nNUM_WORKERS = 0\nVAL_FRACTION = 0.25\nSEED = 42\n"
+                              'RUN_NAME = "smoke"\nBATCH_SIZE = 8\nNUM_WORKERS = 0\nVAL_FRACTION = 0.25\nSEED = 42\n'
                               "")
                 source = source.replace("epochs=80", "epochs=1").replace("epochs=40", "epochs=1")
                 source = source.replace("pretrained=True", "pretrained=False").replace("warmup_epochs=2", "warmup_epochs=0")
                 source = source.replace('device="auto"', 'device="cpu"')
+                source = source.replace('screenshot = RUN_ROOT / "reports" / "demo_screenshot.jpg"',
+                                        'screenshot = OUTPUT_ROOT / "demo_screenshot.jpg"')
                 exec(compile(source, "notebooks/train.ipynb", "exec"), namespace)
         epoch_lines = [line for line in log.getvalue().splitlines() if line.startswith("Epoch ")]
         self.assertEqual(len(epoch_lines), 2)  # One fit per model; no candidates or per-batch output.
         for name in ["cnn", "transfer"]:
             folder = self.work / "outputs" / name
-            self.assertTrue((folder / "best.pt").is_file())
-            self.assertTrue((folder / "last.pt").is_file())
+            self.assertFalse((folder / "best.pt").exists())
+            self.assertFalse((folder / "last.pt").exists())
+            self.assertTrue((self.work / "models" / f"{name}_best.pt").is_file())
             self.assertTrue((folder / "training_curves.png").is_file())
             self.assertTrue((folder / "misclassified.png").is_file())
             metrics = json.loads((folder / "metrics.json").read_text())
@@ -338,13 +341,14 @@ class ProjectTests(unittest.TestCase):
             self.assertEqual(len((folder / "split_manifest.json").read_text()),
                              len((self.work / "outputs" / "split_manifest.json").read_text()))
         self.assertTrue((self.work / "report.pdf").is_file())
+        self.assertTrue((self.work / "models/manifest.json").is_file())
         if os.environ.get("FER_QA_DIR"):
             qa_dir = Path(os.environ["FER_QA_DIR"])
             qa_dir.mkdir(parents=True, exist_ok=True)
             shutil.copy2(self.work / "report.pdf", qa_dir / "synthetic_report.pdf")
             shutil.copytree(self.work / "outputs", qa_dir / "synthetic_outputs", dirs_exist_ok=True,
                             ignore=shutil.ignore_patterns("*.pt"))
-        predictor = EmotionPredictor(self.work / "weights/cnn_best.pt")
+        predictor = EmotionPredictor(self.work / "models/cnn_best.pt")
         face = np.full((60, 60, 3), 128, dtype=np.uint8)
         self.assertEqual(len(predictor.predict_faces([face, face])), 2)
         self.assertEqual(predictor.predict_faces([]), [])
@@ -353,7 +357,7 @@ class ProjectTests(unittest.TestCase):
         with torch.inference_mode():
             expected = predictor.model(make_transform()(Image.fromarray(face[:, :, 0])).unsqueeze(0)).softmax(1)[0]
         torch.testing.assert_close(torch.tensor(result["probabilities"]), expected)
-        transfer_predictor = EmotionPredictor(self.work / "weights/transfer_best.pt")
+        transfer_predictor = EmotionPredictor(self.work / "models/transfer_best.pt")
         transfer_result = transfer_predictor.predict(face)
         self.assertAlmostEqual(sum(transfer_result["probabilities"]), 1.0, places=6)
         self.assertEqual(tuple(transfer_predictor.transform(Image.fromarray(face)).shape), (3, 112, 112))
@@ -367,8 +371,8 @@ class ProjectTests(unittest.TestCase):
         self.assertEqual(len(results), 2)
         config_path = self.work / "config.yaml"
         config_path.write_text(yaml.safe_dump({
-            "weights": {"cnn": str(self.work / "weights/cnn_best.pt"),
-                        "transfer": str(self.work / "weights/transfer_best.pt")},
+            "models": {"cnn": str(self.work / "models/cnn_best.pt"),
+                        "transfer": str(self.work / "models/transfer_best.pt")},
             "camera": {"reconnect_attempts": 2, "reconnect_delay": 0},
             "cpu_threads": 2,
         }), encoding="utf-8")

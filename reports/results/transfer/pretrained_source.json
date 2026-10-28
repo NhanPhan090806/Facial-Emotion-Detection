@@ -1,0 +1,16 @@
+{
+  "dataset": "AffectNet-7",
+  "variant": "DDAMFN++ checkpoint / DDAMFN architecture",
+  "url": "https://raw.githubusercontent.com/SainingZhang/DDAMFN/cebfe5c5969b7d1fd64ecd775e318d3834ca76bb/DDAMFN%2B%2B/checkpoints_ver2.0/affecnet7_epoch19_acc0.671.pth",
+  "commit": "cebfe5c5969b7d1fd64ecd775e318d3834ca76bb",
+  "sha256": "edf731a458162eef6b2be12c3572bd10cbe92ce8c009da4331184a2943d7ed14",
+  "class_row_order": [
+    6,
+    5,
+    4,
+    1,
+    0,
+    2,
+    3
+  ]
+}

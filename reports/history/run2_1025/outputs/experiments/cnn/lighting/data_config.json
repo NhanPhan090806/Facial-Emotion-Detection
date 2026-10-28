@@ -1,0 +1,17 @@
+{
+  "augmentation": "lighting",
+  "batch_size": 128,
+  "num_workers": 0,
+  "split_seed": 42,
+  "val_fraction": 0.1,
+  "class_weight_rule": "sqrt_inverse_frequency_normalized_mean_one",
+  "class_weights": [
+    0.8055612444877625,
+    2.4398627281188965,
+    0.7955580353736877,
+    0.5994952321052551,
+    0.7226088047027588,
+    0.7326787710189819,
+    0.9042352437973022
+  ]
+}

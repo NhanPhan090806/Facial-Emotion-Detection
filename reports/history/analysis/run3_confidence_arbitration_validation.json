@@ -1,0 +1,9 @@
+{
+  "split": "validation",
+  "images": 2871,
+  "rule": "select prediction with higher maximum softmax confidence; CNN wins exact ties",
+  "accuracy": 0.6889585510275166,
+  "macro_f1": 0.6601459786187006,
+  "correct": 1978,
+  "status": "exploratory validation only; no combined test score measured; no deployment code changed"
+}

@@ -1,16 +1,19 @@
 # Relative paths are resolved against this file's directory.
 source: 0  # Local webcam, video/image path, or phone URL such as http://<ip>:8080/video
-weights:
-  cnn: weights/cnn_best.pt
-  transfer: weights/transfer_best.pt
+models:
+  cnn: models/cnn_best.pt
+  transfer: models/transfer_best.pt
 confidence_threshold: 0.40
 device: cpu
 cpu_threads: 4
+display:
+  label_scale: 1.0  # Larger values increase emotion text size (also --label-scale).
 face_detection:
-  scale_factor: 1.1
-  min_neighbors: 5
+  backend: yunet  # Pretrained CPU detector; optional legacy backend: haar.
+  input_size: 320  # Use 640 to improve detection of smaller/distant faces at extra CPU cost.
+  score_threshold: 0.75
+  nms_threshold: 0.30
   min_size: 40
-  max_detection_width: 640
   margin: 0.10
 camera:
   reconnect_attempts: 5

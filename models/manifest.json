@@ -1,0 +1,21 @@
+{
+  "selected_run": "run4_1027",
+  "models": {
+    "cnn": {
+      "file": "cnn_best.pt",
+      "sha256": "65b0a874ae4749592606c03f111e31a128b7854e164615f1aa0f2bc1949cb0ad",
+      "architecture": "cnn",
+      "best_epoch": 67,
+      "test_accuracy": 0.6641125661744218,
+      "test_macro_f1": 0.6414540700867616
+    },
+    "transfer": {
+      "file": "transfer_best.pt",
+      "sha256": "31bd7639ccf3f90d4defb74bbc8c57d501fdb92de43e2cc66e2ec2a485e2cb5d",
+      "architecture": "ddamfn",
+      "best_epoch": 32,
+      "test_accuracy": 0.7205349679576484,
+      "test_macro_f1": 0.7058986745366117
+    }
+  }
+}

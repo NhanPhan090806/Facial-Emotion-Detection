@@ -1,0 +1,16 @@
+{
+  "model": "transfer",
+  "test_accuracy": 0.6707996656450265,
+  "test_macro_f1": 0.6573203807325722,
+  "parameters": 11173831,
+  "test_images": 7178,
+  "best_epoch": 15,
+  "target_accuracy": 0.65,
+  "target_met": true,
+  "cpu_model_fps": 46.117799467190466,
+  "cpu_model_ms": 21.683601810000255,
+  "benchmark_iterations": 100,
+  "cpu_threads": 4,
+  "cpu": "x86_64",
+  "benchmark_scope": "CPU model forward only; batch=1, 1x48x48, float32; excludes face detection, I/O and preprocessing"
+}

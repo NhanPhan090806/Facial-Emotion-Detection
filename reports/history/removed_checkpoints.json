@@ -1,0 +1,122 @@
+[
+  {
+    "path": "kaggle_outputs/run1_1025/weights/cnn_best.pt",
+    "bytes": 3939659,
+    "sha256": "d941b02526ec0a709b6f8964087055c4e6903655a979b2ed1733d3d3793278b3"
+  },
+  {
+    "path": "kaggle_outputs/run1_1025/weights/transfer_best.pt",
+    "bytes": 44768651,
+    "sha256": "88fd5ddd53fb449389097b73b8af1ae0802dc213dcb02d21b929a9d3d02187db"
+  },
+  {
+    "path": "kaggle_outputs/run2_1025/outputs/cnn/best.pt",
+    "bytes": 3940043,
+    "sha256": "8234100bc869837c23691284f6c942bf706e75357b5bab553af87472d7d3cc8b"
+  },
+  {
+    "path": "kaggle_outputs/run2_1025/outputs/cnn/last.pt",
+    "bytes": 3940043,
+    "sha256": "99c32dffba4583d3cf5c5f3f06c35ec75f98624eb87646347200c57d3b51925c"
+  },
+  {
+    "path": "kaggle_outputs/run2_1025/outputs/experiments/cnn/baseline/best.pt",
+    "bytes": 3940043,
+    "sha256": "8234100bc869837c23691284f6c942bf706e75357b5bab553af87472d7d3cc8b"
+  },
+  {
+    "path": "kaggle_outputs/run2_1025/outputs/experiments/cnn/baseline/last.pt",
+    "bytes": 3940043,
+    "sha256": "99c32dffba4583d3cf5c5f3f06c35ec75f98624eb87646347200c57d3b51925c"
+  },
+  {
+    "path": "kaggle_outputs/run2_1025/outputs/experiments/cnn/lighting/best.pt",
+    "bytes": 3940043,
+    "sha256": "17ce31762c3f29c2260bb3a47820f3ba6d8802796c77e896e29652d54bc83e57"
+  },
+  {
+    "path": "kaggle_outputs/run2_1025/outputs/experiments/cnn/lighting/last.pt",
+    "bytes": 3940043,
+    "sha256": "ddfa7058a2701d869d6682a5677ebb2d2f1ba61fda840416122798a459c57ace"
+  },
+  {
+    "path": "kaggle_outputs/run2_1025/outputs/experiments/transfer/baseline/best.pt",
+    "bytes": 44768971,
+    "sha256": "569c8ef52ca82c74d64f9812b980a791173ac2f25802d5c382480697a9ac8c79"
+  },
+  {
+    "path": "kaggle_outputs/run2_1025/outputs/experiments/transfer/baseline/last.pt",
+    "bytes": 44768971,
+    "sha256": "20853cd43ac295bfc7496d8007d7041a329a1c6d5ac5713ddb51ce2e5a3918e8"
+  },
+  {
+    "path": "kaggle_outputs/run2_1025/outputs/experiments/transfer/lighting/best.pt",
+    "bytes": 44768971,
+    "sha256": "dadc4153ed33bfc23680f49d93dc61f895f331452f9060de5d2cdfa26e05c402"
+  },
+  {
+    "path": "kaggle_outputs/run2_1025/outputs/experiments/transfer/lighting/last.pt",
+    "bytes": 44768971,
+    "sha256": "1f8c7bff05a08d4a444be8bce66da09a7074f8d408979d10832c49def4911b03"
+  },
+  {
+    "path": "kaggle_outputs/run2_1025/outputs/experiments/transfer/regularized/best.pt",
+    "bytes": 44768971,
+    "sha256": "6b9b52989a70aece72be4e22f3511e8fbee0aa9499d1fb07d76e277f851eb139"
+  },
+  {
+    "path": "kaggle_outputs/run2_1025/outputs/experiments/transfer/regularized/last.pt",
+    "bytes": 44768971,
+    "sha256": "46d1295cce3720230822c02f786487f67a1ee4248b8f3f3fc9077f0d2ca727b9"
+  },
+  {
+    "path": "kaggle_outputs/run2_1025/outputs/transfer/best.pt",
+    "bytes": 44768971,
+    "sha256": "dadc4153ed33bfc23680f49d93dc61f895f331452f9060de5d2cdfa26e05c402"
+  },
+  {
+    "path": "kaggle_outputs/run2_1025/outputs/transfer/last.pt",
+    "bytes": 44768971,
+    "sha256": "1f8c7bff05a08d4a444be8bce66da09a7074f8d408979d10832c49def4911b03"
+  },
+  {
+    "path": "kaggle_outputs/run2_1025/weights/cnn_best.pt",
+    "bytes": 3940043,
+    "sha256": "8234100bc869837c23691284f6c942bf706e75357b5bab553af87472d7d3cc8b"
+  },
+  {
+    "path": "kaggle_outputs/run2_1025/weights/transfer_best.pt",
+    "bytes": 44768971,
+    "sha256": "dadc4153ed33bfc23680f49d93dc61f895f331452f9060de5d2cdfa26e05c402"
+  },
+  {
+    "path": "kaggle_outputs/run3_1026/outputs/cnn/best.pt",
+    "bytes": 3940043,
+    "sha256": "cf60d447d45b83f576cc618a8c57c1316af6b14624e03010cf9428e52d3f9dee"
+  },
+  {
+    "path": "kaggle_outputs/run3_1026/outputs/cnn/last.pt",
+    "bytes": 3940043,
+    "sha256": "d922c6c58c15c307f41e5aef2edc9f1c93e3971d265907125697215d977d9765"
+  },
+  {
+    "path": "kaggle_outputs/run3_1026/outputs/transfer/best.pt",
+    "bytes": 44768971,
+    "sha256": "e6b4502e4631e6754b0324d07c769763d0e76c39eeeacb3f3d0331de1ef88ac0"
+  },
+  {
+    "path": "kaggle_outputs/run3_1026/outputs/transfer/last.pt",
+    "bytes": 44768971,
+    "sha256": "9bbf60b325bd62f00ca7eccca1281615cbf2ce11a9835c5b53f867d12e1d05db"
+  },
+  {
+    "path": "kaggle_outputs/run3_1026/weights/cnn_best.pt",
+    "bytes": 3940043,
+    "sha256": "cf60d447d45b83f576cc618a8c57c1316af6b14624e03010cf9428e52d3f9dee"
+  },
+  {
+    "path": "kaggle_outputs/run3_1026/weights/transfer_best.pt",
+    "bytes": 44768971,
+    "sha256": "e6b4502e4631e6754b0324d07c769763d0e76c39eeeacb3f3d0331de1ef88ac0"
+  }
+]

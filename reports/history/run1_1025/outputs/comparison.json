@@ -1,0 +1,34 @@
+[
+  {
+    "model": "cnn",
+    "test_accuracy": 0.659933129005294,
+    "test_macro_f1": 0.6336634071023809,
+    "parameters": 980711,
+    "test_images": 7178,
+    "best_epoch": 72,
+    "target_accuracy": 0.6,
+    "target_met": true,
+    "cpu_model_fps": 449.5568812227218,
+    "cpu_model_ms": 2.2244126200007486,
+    "benchmark_iterations": 100,
+    "cpu_threads": 4,
+    "cpu": "x86_64",
+    "benchmark_scope": "CPU model forward only; batch=1, 1x48x48, float32; excludes face detection, I/O and preprocessing"
+  },
+  {
+    "model": "transfer",
+    "test_accuracy": 0.6769295068264141,
+    "test_macro_f1": 0.65774854365506,
+    "parameters": 11173831,
+    "test_images": 7178,
+    "best_epoch": 18,
+    "target_accuracy": 0.65,
+    "target_met": true,
+    "cpu_model_fps": 36.15597797510773,
+    "cpu_model_ms": 27.657943610001894,
+    "benchmark_iterations": 100,
+    "cpu_threads": 4,
+    "cpu": "x86_64",
+    "benchmark_scope": "CPU model forward only; batch=1, 1x48x48, float32; excludes face detection, I/O and preprocessing"
+  }
+]

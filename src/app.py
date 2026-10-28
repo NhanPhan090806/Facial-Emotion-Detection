@@ -42,6 +42,10 @@ def parse_args(argv=None):
     parser.add_argument("--source", help="Phone URL, webcam index, image path, or video path.")
     parser.add_argument("--model", choices=["cnn", "transfer"], default="cnn")
     parser.add_argument("--weights", type=Path, help="Override the configured checkpoint.")
+    parser.add_argument("--detector", choices=["yunet", "haar"], help="Face detector (default: pretrained YuNet).")
+    parser.add_argument("--detector-size", type=int, help="YuNet input size: 320 for speed, 640 for smaller faces.")
+    parser.add_argument("--detector-confidence", type=float, help="Minimum YuNet face-detection confidence.")
+    parser.add_argument("--label-scale", type=float, help="Emotion label size multiplier (default: 1.0).")
     parser.add_argument("--device", help="cpu, cuda, cuda:0, or auto")
     parser.add_argument("--confidence", type=float)
     parser.add_argument("--output", type=Path, help="Annotated image or .mp4/.avi video.")
@@ -51,24 +55,81 @@ def parse_args(argv=None):
     return parser.parse_args(argv)
 
 
-def annotate_frame(frame, detector, predictor, threshold):
+def draw_emotion_label(frame, box, result, threshold, label_scale=1.0):
+    """Draw a large, high-contrast two-line label, keeping the panel inside the image."""
+    height, width = frame.shape[:2]
+    x1, y1, x2, y2 = box
+    confident = result["confidence"] >= threshold
+    color = (50, 210, 80) if confident else (0, 180, 255)
+    title = result["label"].upper() if confident else "UNCERTAIN"
+    detail = (f"{result['confidence']:.1%} confidence" if confident else
+              f"Top guess: {result['label']} {result['confidence']:.1%}")
+    # Keep text readable at 480p and grow it on higher-resolution camera frames.
+    scale = label_scale * max(1.0, min(height / 480, 2.0))
+    padding, gap = 8, 6
+    title_scale, detail_scale = 1.05 * scale, 0.62 * scale
+    font = cv2.FONT_HERSHEY_SIMPLEX
+
+    def measure():
+        title_size, title_base = cv2.getTextSize(title, font, title_scale, 2)
+        detail_size, detail_base = cv2.getTextSize(detail, font, detail_scale, 1)
+        panel_w = max(title_size[0], detail_size[0]) + padding * 2
+        panel_h = title_size[1] + title_base + detail_size[1] + detail_base + padding * 2 + gap
+        return title_size, title_base, detail_size, detail_base, panel_w, panel_h
+
+    # Text must also fit near frame edges and on small image inputs.
+    available_w, available_h = max(1, width - 8), max(1, height - 8)
+    for _ in range(8):
+        title_size, title_base, detail_size, detail_base, panel_w, panel_h = measure()
+        fit = min(1.0, available_w / panel_w, available_h / panel_h)
+        if fit >= 1:
+            break
+        title_scale *= fit * 0.95
+        detail_scale *= fit * 0.95
+        padding = max(1, round(padding * fit))
+        gap = max(1, round(gap * fit))
+    left = max(0, min(x1, width - panel_w))
+    if y1 >= panel_h + 8:
+        top = y1 - panel_h - 8
+    elif y2 + panel_h + 8 <= height:
+        top = y2 + 8
+    else:
+        top = max(0, min(y1 + 4, height - panel_h))
+    right, bottom = min(width - 1, left + panel_w), min(height - 1, top + panel_h)
+    cv2.rectangle(frame, (x1, y1), (x2, y2), color, 3, cv2.LINE_AA)
+    cv2.rectangle(frame, (left, top), (right, bottom), (18, 18, 18), cv2.FILLED)
+    cv2.rectangle(frame, (left, top), (right, bottom), color, 1, cv2.LINE_AA)
+    title_y = top + padding + title_size[1]
+    detail_y = title_y + title_base + gap + detail_size[1]
+    cv2.putText(frame, title, (left + padding, title_y), font, title_scale,
+                (255, 255, 255), 2, cv2.LINE_AA)
+    cv2.putText(frame, detail, (left + padding, detail_y), font, detail_scale,
+                (225, 225, 225), 1, cv2.LINE_AA)
+    return left, top, right, bottom
+
+
+def annotate_frame(frame, detector, predictor, threshold, label_scale=1.0):
     boxes = detector.detect(frame)
     faces = [frame[y1:y2, x1:x2] for x1, y1, x2, y2 in boxes]
     results = predictor.predict_faces(faces)
-    for (x1, y1, x2, y2), result in zip(boxes, results):
-        confident = result["confidence"] >= threshold
-        color = (50, 210, 80) if confident else (0, 180, 255)
-        label = result["label"] if confident else "uncertain"
-        text = f"{label}: {result['confidence']:.1%}"
-        cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
-        text_y = max(20, y1 - 8)
-        cv2.putText(frame, text, (x1, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.55, color, 2)
+    for box, result in zip(boxes, results):
+        draw_emotion_label(frame, box, result, threshold, label_scale)
     return frame, results
 
 
 def draw_fps(frame, fps, faces):
-    cv2.putText(frame, f"FPS: {fps:.1f} | faces: {faces}", (10, 25),
-                cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 230, 0), 2)
+    # Bottom-left avoids the emotion labels normally positioned above faces.
+    text = f"FPS: {fps:.1f} | Faces: {faces}"
+    height, width = frame.shape[:2]
+    font, scale = cv2.FONT_HERSHEY_SIMPLEX, 0.60
+    (text_w, text_h), baseline = cv2.getTextSize(text, font, scale, 1)
+    if text_w + 16 > width:
+        scale *= max(0.05, (width - 16) / (text_w + 1))
+        (text_w, text_h), baseline = cv2.getTextSize(text, font, scale, 1)
+    top = max(0, height - text_h - baseline - 16)
+    cv2.rectangle(frame, (0, top), (min(width - 1, text_w + 16), height - 1), (18, 18, 18), cv2.FILLED)
+    cv2.putText(frame, text, (8, top + text_h + 5), font, scale,
+                (255, 255, 255), 1, cv2.LINE_AA)
 
 
 def open_capture(source, live, camera_config):
@@ -108,11 +169,27 @@ def run(args):
     if threads < 1 or (args.max_frames is not None and args.max_frames < 1):
         raise ValueError("cpu-threads and max-frames must be positive.")
     torch.set_num_threads(threads)
-    weights = args.weights or config_path.parent / config["weights"][args.model]
+    cv2.setNumThreads(threads)  # Bound CPU parallelism in the YuNet detector too.
+    model_paths = config.get("models", config.get("weights", {}))
+    weights = args.weights or config_path.parent / model_paths[args.model]
     predictor = EmotionPredictor(weights, args.device or config.get("device", "cpu"))
     if predictor.checkpoint["model_name"] != args.model:
         raise ValueError("The checkpoint model does not match --model.")
-    detector = FaceDetector(**config.get("face_detection", {}))
+    detector_settings = dict(config.get("face_detection", {}))
+    if args.detector:
+        detector_settings["backend"] = args.detector
+    if args.detector_size is not None:
+        detector_settings["input_size"] = args.detector_size
+    if args.detector_confidence is not None:
+        detector_settings["score_threshold"] = args.detector_confidence
+    if detector_settings.get("model_path"):
+        detector_settings["model_path"] = config_path.parent / detector_settings["model_path"]
+    label_scale = args.label_scale if args.label_scale is not None else config.get("display", {}).get("label_scale", 1.0)
+    if not np.isfinite(label_scale) or label_scale <= 0:
+        raise ValueError("label-scale must be a positive finite number.")
+    detector = FaceDetector(**detector_settings)
+    LOG.info("Face detector: %s | emotion model: %s | label scale: %.2f",
+             detector.backend, args.model, label_scale)
     output = args.output
     if output:
         output.parent.mkdir(parents=True, exist_ok=True)
@@ -124,9 +201,9 @@ def run(args):
         if frame is None:
             raise ValueError(f"OpenCV could not decode image: {source}")
         start = time.perf_counter()
-        frame, results = annotate_frame(frame, detector, predictor, threshold)
+        frame, results = annotate_frame(frame, detector, predictor, threshold, label_scale)
         draw_fps(frame, 1 / max(time.perf_counter() - start, 1e-6), len(results))
-        output = output or config_path.parent / "outputs" / "prediction.jpg"
+        output = output or config_path.parent / "reports" / "predictions" / "prediction.jpg"
         if output.suffix.lower() not in IMAGE_EXTENSIONS:
             raise ValueError("Image output must have an image extension such as .jpg or .png.")
         output.parent.mkdir(parents=True, exist_ok=True)
@@ -182,7 +259,7 @@ def run(args):
                         time.sleep(min(0.05, max(0, until - time.perf_counter())))
                 continue
             failures = 0
-            frame, results = annotate_frame(frame, detector, predictor, threshold)
+            frame, results = annotate_frame(frame, detector, predictor, threshold, label_scale)
             fps = 1 / max(time.perf_counter() - start, 1e-6)
             smoothed_fps = fps if smoothed_fps == 0 else 0.9 * smoothed_fps + 0.1 * fps
             draw_fps(frame, smoothed_fps, len(results))
@@ -209,7 +286,7 @@ def run(args):
                 if key == ord("q"):
                     break
                 if key == ord("s"):
-                    screenshot = config_path.parent / "outputs" / "demo_screenshot.jpg"
+                    screenshot = config_path.parent / "reports" / "demo_screenshot.jpg"
                     screenshot.parent.mkdir(parents=True, exist_ok=True)
                     write_image(screenshot, frame)
                     LOG.info("Screenshot saved: %s", screenshot)

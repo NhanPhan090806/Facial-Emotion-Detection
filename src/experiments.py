@@ -58,14 +58,18 @@ def _normalized_split(rows):
 
 
 def read_archive(root, model_name):
-    """Accept full outputs/model/ or compact outputs/ + sibling weights/ archives."""
+    """Read full training outputs or compact reports/results/ with selected models/."""
     root = Path(root)
     source = root / model_name
-    checkpoint_path = source / "best.pt"
-    if not checkpoint_path.is_file():
-        checkpoint_path = root.parent / "weights" / f"{model_name}_best.pt"
-    if not checkpoint_path.is_file():
-        raise FileNotFoundError(f"No {model_name} checkpoint under {root} or its sibling weights/.")
+    candidates = [
+        source / "best.pt",
+        root.parent / "models" / f"{model_name}_best.pt",
+        root.parent.parent / "models" / f"{model_name}_best.pt",
+        root.parent / "weights" / f"{model_name}_best.pt",  # Historical external archives.
+    ]
+    checkpoint_path = next((path for path in candidates if path.is_file()), None)
+    if checkpoint_path is None:
+        raise FileNotFoundError(f"No {model_name} checkpoint in the training outputs or models/ directory.")
     manifest_path = source / "split_manifest.json"
     if not manifest_path.is_file():
         manifest_path = root / "split_manifest.json"

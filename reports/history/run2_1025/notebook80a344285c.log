@@ -1,0 +1,453 @@
+7.9s 1 0.00s - Debugger warning: It seems that frozen modules are being used, which may
+7.9s 2 0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off
+7.9s 3 0.00s - to python to disable frozen modules.
+7.9s 4 0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.
+8.5s 5 0.00s - Debugger warning: It seems that frozen modules are being used, which may
+8.5s 6 0.00s - make the debugger miss breakpoints. Please pass -Xfrozen_modules=off
+8.5s 7 0.00s - to python to disable frozen modules.
+8.5s 8 0.00s - Note: Debugging will proceed. Set PYDEVD_DISABLE_FILE_VALIDATION=1 to disable this validation.
+9.6s 9 Cloning into '/kaggle/working/fer2013-project'...
+9.8s 10 Cloning into '/kaggle/working/fer2013-project'...
+9.8s 11 
+9.8s 12 Cloning into '/kaggle/working/fer2013-project'...
+10.3s 13 Repository: /kaggle/working/fer2013-project
+10.3s 14 Commit: df69766d4be2539db5b2fe6687f5fda23c79abfd
+31.3s 15 ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+31.3s 16 google-colab 1.0.0 requires ipykernel==6.17.1, but you have ipykernel 7.4.0 which is incompatible.
+31.3s 17 google-colab 1.0.0 requires jupyter-server==2.20.0, but you have jupyter-server 2.12.5 which is incompatible.
+31.3s 18 google-colab 1.0.0 requires pandas==2.2.3, but you have pandas 2.3.3 which is incompatible.
+31.3s 19 google-colab 1.0.0 requires requests==2.32.4, but you have requests 2.34.2 which is incompatible.
+31.3s 20 notebook 6.5.7 requires jupyter-client<8,>=5.3.4, but you have jupyter-client 8.10.0 which is incompatible.
+31.3s 21 jupyter-kernel-gateway 2.5.2 requires jupyter_client<8.0,>=5.2.0, but you have jupyter-client 8.10.0 which is incompatible.
+31.5s 22 ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+31.5s 23 google-colab 1.0.0 requires ipykernel==6.17.1, but you have ipykernel 7.4.0 which is incompatible.
+31.5s 24 google-colab 1.0.0 requires jupyter-server==2.20.0, but you have jupyter-server 2.12.5 which is incompatible.
+31.5s 25 google-colab 1.0.0 requires pandas==2.2.3, but you have pandas 2.3.3 which is incompatible.
+31.5s 26 google-colab 1.0.0 requires requests==2.32.4, but you have requests 2.34.2 which is incompatible.
+31.5s 27 notebook 6.5.7 requires jupyter-client<8,>=5.3.4, but you have jupyter-client 8.10.0 which is incompatible.
+31.5s 28 jupyter-kernel-gateway 2.5.2 requires jupyter_client<8.0,>=5.2.0, but you have jupyter-client 8.10.0 which is incompatible.
+31.5s 29 
+31.5s 30 ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+31.5s 31 google-colab 1.0.0 requires ipykernel==6.17.1, but you have ipykernel 7.4.0 which is incompatible.
+31.5s 32 google-colab 1.0.0 requires jupyter-server==2.20.0, but you have jupyter-server 2.12.5 which is incompatible.
+31.5s 33 google-colab 1.0.0 requires pandas==2.2.3, but you have pandas 2.3.3 which is incompatible.
+31.5s 34 google-colab 1.0.0 requires requests==2.32.4, but you have requests 2.34.2 which is incompatible.
+31.5s 35 notebook 6.5.7 requires jupyter-client<8,>=5.3.4, but you have jupyter-client 8.10.0 which is incompatible.
+31.5s 36 jupyter-kernel-gateway 2.5.2 requires jupyter_client<8.0,>=5.2.0, but you have jupyter-client 8.10.0 which is incompatible.
+48.0s 37 PyTorch: 2.11.0+cu128
+48.0s 38 CUDA: True
+48.0s 39 GPU: Tesla T4
+51.2s 40 Warning: Looks like you're using an outdated `kagglehub` version (installed: 1.0.2), please consider upgrading to the latest version (1.0.3)Downloading to /root/.cache/kagglehub/datasets/msambare/fer2013/1.archive...
+51.2s 41 0%|          | 0.00/60.3M [00:00<?, ?B/s]
+51.3s 42 0%|          | 0.00/60.3M [00:00<?, ?B/s] 25%|██▍       | 15.0M/60.3M [00:00<00:00, 146MB/s]
+51.5s 43 25%|██▍       | 15.0M/60.3M [00:00<00:00, 146MB/s] 48%|████▊     | 29.0M/60.3M [00:00<00:00, 130MB/s]
+51.6s 44 48%|████▊     | 29.0M/60.3M [00:00<00:00, 130MB/s] 70%|██████▉   | 42.0M/60.3M [00:00<00:00, 131MB/s]
+51.7s 45 70%|██████▉   | 42.0M/60.3M [00:00<00:00, 131MB/s] 93%|█████████▎| 56.0M/60.3M [00:00<00:00, 137MB/s]
+51.7s 46 93%|█████████▎| 56.0M/60.3M [00:00<00:00, 137MB/s]100%|██████████| 60.3M/60.3M [00:00<00:00, 136MB/s]
+51.7s 47 Extracting files...
+51.8s 48 100%|██████████| 60.3M/60.3M [00:00<00:00, 136MB/s]
+51.8s 49 
+51.8s 50 
+55.7s 51 Dataset: /root/.cache/kagglehub/datasets/msambare/fer2013/versions/1
+55.7s 52 Results: /kaggle/working/fer2013_accuracy_v2/outputs
+56.9s 53 Resolved data directory: /root/.cache/kagglehub/datasets/msambare/fer2013/versions/1
+56.9s 54 {
+56.9s 55 "train": {
+56.9s 56 "angry": 3596,
+56.9s 57 "disgust": 392,
+56.9s 58 "fear": 3687,
+56.9s 59 "happy": 6493,
+56.9s 60 "neutral": 4469,
+56.9s 61 "sad": 4347,
+56.9s 62 "surprise": 2854
+56.9s 63 },
+56.9s 64 "val": {
+56.9s 65 "angry": 399,
+56.9s 66 "disgust": 44,
+56.9s 67 "fear": 410,
+56.9s 68 "happy": 722,
+56.9s 69 "neutral": 496,
+56.9s 70 "sad": 483,
+56.9s 71 "surprise": 317
+56.9s 72 },
+56.9s 73 "test": {
+56.9s 74 "angry": 958,
+56.9s 75 "disgust": 111,
+56.9s 76 "fear": 1024,
+56.9s 77 "happy": 1774,
+56.9s 78 "neutral": 1233,
+56.9s 79 "sad": 1247,
+56.9s 80 "surprise": 831
+56.9s 81 }
+56.9s 82 }
+56.9s 83 Class order: ['angry', 'disgust', 'fear', 'happy', 'neutral', 'sad', 'surprise']
+56.9s 84 Training class weights: [0.8055612444877625, 2.4398627281188965, 0.7955580353736877, 0.5994952321052551, 0.7226088047027588, 0.7326787710189819, 0.9042352437973022]
+57.4s 85 cnn: 980,711 parameters; output (2, 7)
+57.4s 86 transfer: 11,173,831 parameters; output (2, 7)
+57.4s 87 
+57.4s 88 CNN
+57.4s 89 baseline {'model_name': 'cnn', 'epochs': 80, 'learning_rate': 0.001, 'backbone_lr': 0.0001, 'weight_decay': 0.0001, 'patience': 18, 'label_smoothing': 0.05, 'use_class_weights': True, 'pretrained': False, 'amp': True, 'seed': 42, 'device': 'auto', 'cpu_threads': 4, 'augmentation': 'baseline'}
+57.4s 90 lighting {'model_name': 'cnn', 'epochs': 80, 'learning_rate': 0.001, 'backbone_lr': 0.0001, 'weight_decay': 0.0001, 'patience': 18, 'label_smoothing': 0.05, 'use_class_weights': True, 'pretrained': False, 'amp': True, 'seed': 42, 'device': 'auto', 'cpu_threads': 4, 'augmentation': 'lighting'}
+57.4s 91 
+57.4s 92 TRANSFER
+57.4s 93 baseline {'model_name': 'transfer', 'epochs': 20, 'learning_rate': 0.001, 'backbone_lr': 0.0001, 'weight_decay': 0.0001, 'patience': 12, 'label_smoothing': 0.05, 'use_class_weights': True, 'pretrained': True, 'amp': True, 'seed': 42, 'device': 'auto', 'cpu_threads': 4, 'augmentation': 'baseline'}
+57.4s 94 lighting {'model_name': 'transfer', 'epochs': 20, 'learning_rate': 0.001, 'backbone_lr': 0.0001, 'weight_decay': 0.0001, 'patience': 12, 'label_smoothing': 0.05, 'use_class_weights': True, 'pretrained': True, 'amp': True, 'seed': 42, 'device': 'auto', 'cpu_threads': 4, 'augmentation': 'lighting'}
+57.4s 95 regularized {'model_name': 'transfer', 'epochs': 20, 'learning_rate': 0.001, 'backbone_lr': 5e-05, 'weight_decay': 0.0005, 'patience': 12, 'label_smoothing': 0.05, 'use_class_weights': True, 'pretrained': True, 'amp': True, 'seed': 42, 'device': 'auto', 'cpu_threads': 4, 'augmentation': 'occlusion'}
+57.6s 96 
+57.6s 97 === cnn: baseline ===
+58.6s 98 cnn: 980,711 parameters | cuda | AMP=True
+81.1s 99 Epoch 001/080 | train loss 1.6859 acc 0.339 | val loss 1.4622 acc 0.436 F1 0.305 | 22.4s *
+101.2s 100 Epoch 002/080 | train loss 1.4979 acc 0.435 | val loss 1.3283 acc 0.503 F1 0.419 | 20.1s *
+121.1s 101 Epoch 003/080 | train loss 1.4107 acc 0.470 | val loss 1.2687 acc 0.518 F1 0.423 | 19.9s *
+141.0s 102 Epoch 004/080 | train loss 1.3624 acc 0.489 | val loss 1.2215 acc 0.544 F1 0.462 | 19.9s *
+160.9s 103 Epoch 005/080 | train loss 1.3317 acc 0.499 | val loss 1.2333 acc 0.538 F1 0.473 | 19.9s
+180.6s 104 Epoch 006/080 | train loss 1.2996 acc 0.511 | val loss 1.1736 acc 0.576 F1 0.519 | 19.7s *
+200.3s 105 Epoch 007/080 | train loss 1.2769 acc 0.524 | val loss 1.1779 acc 0.555 F1 0.483 | 19.8s
+220.0s 106 Epoch 008/080 | train loss 1.2575 acc 0.531 | val loss 1.1177 acc 0.569 F1 0.489 | 19.6s
+239.8s 107 Epoch 009/080 | train loss 1.2419 acc 0.536 | val loss 1.1426 acc 0.580 F1 0.525 | 19.9s *
+259.8s 108 Epoch 010/080 | train loss 1.2281 acc 0.541 | val loss 1.1172 acc 0.580 F1 0.522 | 19.9s *
+279.4s 109 Epoch 011/080 | train loss 1.2154 acc 0.549 | val loss 1.1297 acc 0.576 F1 0.522 | 19.7s
+299.2s 110 Epoch 012/080 | train loss 1.2009 acc 0.555 | val loss 1.1084 acc 0.595 F1 0.540 | 19.7s *
+319.1s 111 Epoch 013/080 | train loss 1.1842 acc 0.558 | val loss 1.0774 acc 0.601 F1 0.540 | 19.9s *
+339.0s 112 Epoch 014/080 | train loss 1.1782 acc 0.561 | val loss 1.0687 acc 0.594 F1 0.533 | 19.9s
+358.9s 113 Epoch 015/080 | train loss 1.1726 acc 0.567 | val loss 1.0762 acc 0.605 F1 0.541 | 19.9s *
+378.7s 114 Epoch 016/080 | train loss 1.1665 acc 0.569 | val loss 1.0533 acc 0.607 F1 0.547 | 19.8s *
+398.6s 115 Epoch 017/080 | train loss 1.1500 acc 0.577 | val loss 1.0410 acc 0.610 F1 0.553 | 19.9s *
+418.5s 116 Epoch 018/080 | train loss 1.1482 acc 0.577 | val loss 1.0446 acc 0.614 F1 0.562 | 19.9s *
+438.5s 117 Epoch 019/080 | train loss 1.1285 acc 0.582 | val loss 1.0479 acc 0.615 F1 0.563 | 20.0s *
+458.6s 118 Epoch 020/080 | train loss 1.1284 acc 0.585 | val loss 1.0437 acc 0.611 F1 0.555 | 20.0s
+478.5s 119 Epoch 021/080 | train loss 1.1140 acc 0.590 | val loss 1.0513 acc 0.604 F1 0.545 | 19.9s
+498.5s 120 Epoch 022/080 | train loss 1.1091 acc 0.591 | val loss 1.0090 acc 0.632 F1 0.585 | 20.0s *
+518.2s 121 Epoch 023/080 | train loss 1.1081 acc 0.594 | val loss 1.0352 acc 0.622 F1 0.565 | 19.6s
+537.8s 122 Epoch 024/080 | train loss 1.1002 acc 0.597 | val loss 1.0288 acc 0.620 F1 0.559 | 19.6s
+557.5s 123 Epoch 025/080 | train loss 1.0964 acc 0.596 | val loss 1.0224 acc 0.624 F1 0.570 | 19.7s
+577.0s 124 Epoch 026/080 | train loss 1.0843 acc 0.600 | val loss 1.0080 acc 0.630 F1 0.584 | 19.5s
+596.5s 125 Epoch 027/080 | train loss 1.0799 acc 0.604 | val loss 0.9996 acc 0.630 F1 0.584 | 19.5s
+616.2s 126 Epoch 028/080 | train loss 1.0766 acc 0.607 | val loss 1.0173 acc 0.617 F1 0.565 | 19.7s
+636.0s 127 Epoch 029/080 | train loss 1.0682 acc 0.608 | val loss 1.0022 acc 0.633 F1 0.589 | 19.8s *
+655.6s 128 Epoch 030/080 | train loss 1.0579 acc 0.610 | val loss 1.0070 acc 0.626 F1 0.567 | 19.6s
+675.0s 129 Epoch 031/080 | train loss 1.0547 acc 0.615 | val loss 0.9842 acc 0.635 F1 0.585 | 19.4s *
+694.6s 130 Epoch 032/080 | train loss 1.0609 acc 0.614 | val loss 0.9958 acc 0.628 F1 0.573 | 19.5s
+714.1s 131 Epoch 033/080 | train loss 1.0487 acc 0.617 | val loss 0.9678 acc 0.644 F1 0.600 | 19.6s *
+733.7s 132 Epoch 034/080 | train loss 1.0391 acc 0.620 | val loss 0.9828 acc 0.639 F1 0.597 | 19.6s
+753.4s 133 Epoch 035/080 | train loss 1.0417 acc 0.623 | val loss 0.9816 acc 0.635 F1 0.584 | 19.7s
+773.1s 134 Epoch 036/080 | train loss 1.0339 acc 0.625 | val loss 0.9853 acc 0.640 F1 0.594 | 19.7s
+792.6s 135 Epoch 037/080 | train loss 1.0315 acc 0.623 | val loss 0.9865 acc 0.637 F1 0.593 | 19.5s
+812.1s 136 Epoch 038/080 | train loss 1.0242 acc 0.627 | val loss 0.9660 acc 0.642 F1 0.607 | 19.5s
+831.7s 137 Epoch 039/080 | train loss 1.0152 acc 0.630 | val loss 0.9768 acc 0.639 F1 0.590 | 19.6s
+851.3s 138 Epoch 040/080 | train loss 1.0197 acc 0.627 | val loss 0.9723 acc 0.645 F1 0.594 | 19.6s *
+870.9s 139 Epoch 041/080 | train loss 1.0142 acc 0.632 | val loss 0.9675 acc 0.641 F1 0.590 | 19.6s
+890.5s 140 Epoch 042/080 | train loss 1.0074 acc 0.633 | val loss 0.9726 acc 0.642 F1 0.593 | 19.6s
+910.2s 141 Epoch 043/080 | train loss 1.0038 acc 0.635 | val loss 0.9777 acc 0.643 F1 0.598 | 19.7s
+929.9s 142 Epoch 044/080 | train loss 1.0032 acc 0.639 | val loss 0.9730 acc 0.641 F1 0.596 | 19.7s
+949.5s 143 Epoch 045/080 | train loss 1.0017 acc 0.637 | val loss 0.9630 acc 0.644 F1 0.593 | 19.6s
+969.2s 144 Epoch 046/080 | train loss 0.9917 acc 0.642 | val loss 0.9600 acc 0.644 F1 0.595 | 19.7s
+988.9s 145 Epoch 047/080 | train loss 0.9920 acc 0.641 | val loss 0.9588 acc 0.648 F1 0.604 | 19.7s *
+1008.4s 146 Epoch 048/080 | train loss 0.9829 acc 0.641 | val loss 0.9459 acc 0.652 F1 0.609 | 19.4s *
+1028.1s 147 Epoch 049/080 | train loss 0.9852 acc 0.641 | val loss 0.9628 acc 0.643 F1 0.596 | 19.7s
+1047.8s 148 Epoch 050/080 | train loss 0.9748 acc 0.649 | val loss 0.9535 acc 0.649 F1 0.607 | 19.7s
+1067.5s 149 Epoch 051/080 | train loss 0.9770 acc 0.646 | val loss 0.9509 acc 0.651 F1 0.613 | 19.7s
+1086.9s 150 Epoch 052/080 | train loss 0.9707 acc 0.647 | val loss 0.9462 acc 0.651 F1 0.611 | 19.4s
+1106.4s 151 Epoch 053/080 | train loss 0.9695 acc 0.650 | val loss 0.9506 acc 0.651 F1 0.608 | 19.5s
+1126.0s 152 Epoch 054/080 | train loss 0.9705 acc 0.652 | val loss 0.9477 acc 0.651 F1 0.608 | 19.5s
+1145.4s 153 Epoch 055/080 | train loss 0.9676 acc 0.648 | val loss 0.9563 acc 0.648 F1 0.605 | 19.5s
+1165.0s 154 Epoch 056/080 | train loss 0.9687 acc 0.652 | val loss 0.9440 acc 0.656 F1 0.616 | 19.6s *
+1184.7s 155 Epoch 057/080 | train loss 0.9609 acc 0.653 | val loss 0.9439 acc 0.655 F1 0.618 | 19.7s
+1204.4s 156 Epoch 058/080 | train loss 0.9579 acc 0.652 | val loss 0.9477 acc 0.657 F1 0.618 | 19.7s *
+1224.1s 157 Epoch 059/080 | train loss 0.9571 acc 0.656 | val loss 0.9440 acc 0.652 F1 0.613 | 19.7s
+1243.7s 158 Epoch 060/080 | train loss 0.9591 acc 0.654 | val loss 0.9397 acc 0.654 F1 0.612 | 19.6s
+1263.4s 159 Epoch 061/080 | train loss 0.9561 acc 0.656 | val loss 0.9399 acc 0.656 F1 0.615 | 19.7s
+1283.1s 160 Epoch 062/080 | train loss 0.9493 acc 0.656 | val loss 0.9409 acc 0.658 F1 0.618 | 19.6s *
+1302.6s 161 Epoch 063/080 | train loss 0.9525 acc 0.654 | val loss 0.9371 acc 0.657 F1 0.613 | 19.5s
+1322.2s 162 Epoch 064/080 | train loss 0.9472 acc 0.658 | val loss 0.9388 acc 0.658 F1 0.616 | 19.6s
+1341.5s 163 Epoch 065/080 | train loss 0.9448 acc 0.662 | val loss 0.9396 acc 0.655 F1 0.613 | 19.4s
+1361.0s 164 Epoch 066/080 | train loss 0.9482 acc 0.656 | val loss 0.9371 acc 0.656 F1 0.616 | 19.4s
+1380.3s 165 Epoch 067/080 | train loss 0.9402 acc 0.660 | val loss 0.9403 acc 0.655 F1 0.615 | 19.3s
+1399.9s 166 Epoch 068/080 | train loss 0.9397 acc 0.664 | val loss 0.9366 acc 0.658 F1 0.613 | 19.6s *
+1419.5s 167 Epoch 069/080 | train loss 0.9432 acc 0.658 | val loss 0.9385 acc 0.655 F1 0.610 | 19.6s
+1439.1s 168 Epoch 070/080 | train loss 0.9386 acc 0.662 | val loss 0.9365 acc 0.655 F1 0.612 | 19.5s
+1458.7s 169 Epoch 071/080 | train loss 0.9374 acc 0.662 | val loss 0.9366 acc 0.652 F1 0.609 | 19.6s
+1478.3s 170 Epoch 072/080 | train loss 0.9413 acc 0.658 | val loss 0.9356 acc 0.657 F1 0.615 | 19.6s
+1497.8s 171 Epoch 073/080 | train loss 0.9453 acc 0.657 | val loss 0.9364 acc 0.657 F1 0.615 | 19.5s
+1517.3s 172 Epoch 074/080 | train loss 0.9388 acc 0.662 | val loss 0.9340 acc 0.655 F1 0.612 | 19.5s
+1536.9s 173 Epoch 075/080 | train loss 0.9393 acc 0.656 | val loss 0.9371 acc 0.653 F1 0.612 | 19.5s
+1556.7s 174 Epoch 076/080 | train loss 0.9379 acc 0.664 | val loss 0.9378 acc 0.653 F1 0.611 | 19.9s
+1576.4s 175 Epoch 077/080 | train loss 0.9344 acc 0.664 | val loss 0.9362 acc 0.655 F1 0.613 | 19.7s
+1596.2s 176 Epoch 078/080 | train loss 0.9395 acc 0.662 | val loss 0.9398 acc 0.652 F1 0.610 | 19.7s
+1615.8s 177 Epoch 079/080 | train loss 0.9389 acc 0.663 | val loss 0.9367 acc 0.655 F1 0.612 | 19.6s
+1635.3s 178 Epoch 080/080 | train loss 0.9435 acc 0.660 | val loss 0.9372 acc 0.654 F1 0.613 | 19.4s
+1636.8s 179 baseline: validation accuracy 65.83%, F1 0.6133
+1636.8s 180 
+1636.8s 181 === cnn: lighting ===
+1637.6s 182 cnn: 980,711 parameters | cuda | AMP=True
+1662.2s 183 Epoch 001/080 | train loss 1.6950 acc 0.335 | val loss 1.5325 acc 0.410 F1 0.287 | 24.6s *
+1686.9s 184 Epoch 002/080 | train loss 1.5017 acc 0.430 | val loss 1.3125 acc 0.499 F1 0.423 | 24.6s *
+1711.7s 185 Epoch 003/080 | train loss 1.4158 acc 0.465 | val loss 1.2680 acc 0.529 F1 0.451 | 24.8s *
+1736.3s 186 Epoch 004/080 | train loss 1.3673 acc 0.487 | val loss 1.2229 acc 0.541 F1 0.457 | 24.6s *
+1761.1s 187 Epoch 005/080 | train loss 1.3323 acc 0.503 | val loss 1.1942 acc 0.557 F1 0.489 | 24.8s *
+1785.6s 188 Epoch 006/080 | train loss 1.3051 acc 0.516 | val loss 1.1732 acc 0.569 F1 0.507 | 24.5s *
+1810.2s 189 Epoch 007/080 | train loss 1.2831 acc 0.523 | val loss 1.1647 acc 0.564 F1 0.492 | 24.6s
+1834.7s 190 Epoch 008/080 | train loss 1.2660 acc 0.530 | val loss 1.1269 acc 0.572 F1 0.493 | 24.5s *
+1859.4s 191 Epoch 009/080 | train loss 1.2446 acc 0.535 | val loss 1.1169 acc 0.586 F1 0.531 | 24.7s *
+1883.9s 192 Epoch 010/080 | train loss 1.2319 acc 0.542 | val loss 1.1042 acc 0.597 F1 0.543 | 24.5s *
+1908.4s 193 Epoch 011/080 | train loss 1.2195 acc 0.548 | val loss 1.1028 acc 0.596 F1 0.545 | 24.4s
+1932.9s 194 Epoch 012/080 | train loss 1.1984 acc 0.556 | val loss 1.1162 acc 0.586 F1 0.531 | 24.5s
+1957.5s 195 Epoch 013/080 | train loss 1.1984 acc 0.555 | val loss 1.0786 acc 0.603 F1 0.541 | 24.6s *
+1982.1s 196 Epoch 014/080 | train loss 1.1893 acc 0.561 | val loss 1.0665 acc 0.594 F1 0.537 | 24.5s
+2006.6s 197 Epoch 015/080 | train loss 1.1738 acc 0.566 | val loss 1.0689 acc 0.598 F1 0.537 | 24.5s
+2030.8s 198 Epoch 016/080 | train loss 1.1644 acc 0.569 | val loss 1.0614 acc 0.601 F1 0.535 | 24.3s
+2055.3s 199 Epoch 017/080 | train loss 1.1572 acc 0.572 | val loss 1.0466 acc 0.607 F1 0.552 | 24.4s *
+2079.5s 200 Epoch 018/080 | train loss 1.1467 acc 0.577 | val loss 1.0535 acc 0.613 F1 0.563 | 24.2s *
+2103.7s 201 Epoch 019/080 | train loss 1.1441 acc 0.575 | val loss 1.0271 acc 0.616 F1 0.567 | 24.1s *
+2128.0s 202 Epoch 020/080 | train loss 1.1302 acc 0.585 | val loss 1.0590 acc 0.603 F1 0.539 | 24.3s
+2152.6s 203 Epoch 021/080 | train loss 1.1234 acc 0.586 | val loss 1.0167 acc 0.622 F1 0.570 | 24.7s *
+2177.2s 204 Epoch 022/080 | train loss 1.1157 acc 0.594 | val loss 1.0049 acc 0.613 F1 0.564 | 24.5s
+2201.9s 205 Epoch 023/080 | train loss 1.1164 acc 0.590 | val loss 1.0292 acc 0.617 F1 0.561 | 24.7s
+2226.4s 206 Epoch 024/080 | train loss 1.1081 acc 0.594 | val loss 1.0201 acc 0.625 F1 0.571 | 24.5s *
+2250.8s 207 Epoch 025/080 | train loss 1.0987 acc 0.595 | val loss 1.0197 acc 0.616 F1 0.559 | 24.4s
+2275.3s 208 Epoch 026/080 | train loss 1.0974 acc 0.600 | val loss 1.0141 acc 0.620 F1 0.570 | 24.5s
+2299.6s 209 Epoch 027/080 | train loss 1.0912 acc 0.605 | val loss 1.0065 acc 0.626 F1 0.577 | 24.3s *
+2323.9s 210 Epoch 028/080 | train loss 1.0793 acc 0.606 | val loss 1.0166 acc 0.623 F1 0.568 | 24.3s
+2348.8s 211 Epoch 029/080 | train loss 1.0771 acc 0.607 | val loss 1.0058 acc 0.630 F1 0.588 | 24.9s *
+2374.0s 212 Epoch 030/080 | train loss 1.0712 acc 0.607 | val loss 1.0176 acc 0.620 F1 0.560 | 25.2s
+2399.7s 213 Epoch 031/080 | train loss 1.0710 acc 0.610 | val loss 0.9873 acc 0.629 F1 0.577 | 25.7s
+2425.7s 214 Epoch 032/080 | train loss 1.0629 acc 0.613 | val loss 0.9962 acc 0.631 F1 0.579 | 26.0s *
+2450.6s 215 Epoch 033/080 | train loss 1.0528 acc 0.617 | val loss 0.9945 acc 0.626 F1 0.574 | 24.9s
+2475.3s 216 Epoch 034/080 | train loss 1.0422 acc 0.619 | val loss 0.9842 acc 0.630 F1 0.577 | 24.7s
+2500.5s 217 Epoch 035/080 | train loss 1.0489 acc 0.616 | val loss 0.9923 acc 0.627 F1 0.573 | 25.2s
+2525.5s 218 Epoch 036/080 | train loss 1.0371 acc 0.624 | val loss 0.9965 acc 0.627 F1 0.570 | 24.9s
+2550.0s 219 Epoch 037/080 | train loss 1.0403 acc 0.622 | val loss 0.9862 acc 0.630 F1 0.586 | 24.5s
+2574.8s 220 Epoch 038/080 | train loss 1.0335 acc 0.623 | val loss 0.9720 acc 0.637 F1 0.591 | 24.7s *
+2599.7s 221 Epoch 039/080 | train loss 1.0276 acc 0.623 | val loss 0.9757 acc 0.638 F1 0.590 | 24.9s *
+2624.8s 222 Epoch 040/080 | train loss 1.0275 acc 0.626 | val loss 0.9883 acc 0.622 F1 0.572 | 25.1s
+2650.1s 223 Epoch 041/080 | train loss 1.0224 acc 0.631 | val loss 0.9669 acc 0.633 F1 0.590 | 25.3s
+2675.6s 224 Epoch 042/080 | train loss 1.0174 acc 0.628 | val loss 0.9659 acc 0.642 F1 0.595 | 25.5s *
+2701.0s 225 Epoch 043/080 | train loss 1.0171 acc 0.630 | val loss 0.9857 acc 0.634 F1 0.587 | 25.5s
+2726.4s 226 Epoch 044/080 | train loss 1.0101 acc 0.631 | val loss 0.9766 acc 0.625 F1 0.576 | 25.4s
+2751.8s 227 Epoch 045/080 | train loss 1.0162 acc 0.632 | val loss 0.9624 acc 0.635 F1 0.588 | 25.4s
+2777.3s 228 Epoch 046/080 | train loss 1.0056 acc 0.637 | val loss 0.9601 acc 0.640 F1 0.595 | 25.4s
+2803.3s 229 Epoch 047/080 | train loss 1.0000 acc 0.635 | val loss 0.9550 acc 0.641 F1 0.597 | 26.0s
+2828.6s 230 Epoch 048/080 | train loss 0.9959 acc 0.639 | val loss 0.9553 acc 0.641 F1 0.603 | 25.4s
+2854.3s 231 Epoch 049/080 | train loss 0.9991 acc 0.638 | val loss 0.9631 acc 0.641 F1 0.602 | 25.6s
+2879.7s 232 Epoch 050/080 | train loss 0.9872 acc 0.645 | val loss 0.9585 acc 0.643 F1 0.598 | 25.5s *
+2905.3s 233 Epoch 051/080 | train loss 0.9875 acc 0.644 | val loss 0.9454 acc 0.650 F1 0.608 | 25.6s *
+2930.8s 234 Epoch 052/080 | train loss 0.9899 acc 0.639 | val loss 0.9505 acc 0.641 F1 0.598 | 25.4s
+2956.4s 235 Epoch 053/080 | train loss 0.9809 acc 0.643 | val loss 0.9453 acc 0.643 F1 0.600 | 25.6s
+2982.1s 236 Epoch 054/080 | train loss 0.9782 acc 0.647 | val loss 0.9486 acc 0.645 F1 0.603 | 25.6s
+3007.6s 237 Epoch 055/080 | train loss 0.9754 acc 0.647 | val loss 0.9476 acc 0.642 F1 0.598 | 25.6s
+3033.0s 238 Epoch 056/080 | train loss 0.9757 acc 0.646 | val loss 0.9509 acc 0.644 F1 0.600 | 25.4s
+3058.7s 239 Epoch 057/080 | train loss 0.9691 acc 0.652 | val loss 0.9456 acc 0.639 F1 0.596 | 25.6s
+3084.2s 240 Epoch 058/080 | train loss 0.9749 acc 0.649 | val loss 0.9499 acc 0.643 F1 0.599 | 25.6s
+3109.8s 241 Epoch 059/080 | train loss 0.9645 acc 0.652 | val loss 0.9468 acc 0.644 F1 0.599 | 25.5s
+3135.2s 242 Epoch 060/080 | train loss 0.9692 acc 0.651 | val loss 0.9424 acc 0.648 F1 0.608 | 25.4s
+3160.8s 243 Epoch 061/080 | train loss 0.9703 acc 0.652 | val loss 0.9413 acc 0.653 F1 0.612 | 25.6s *
+3186.4s 244 Epoch 062/080 | train loss 0.9614 acc 0.654 | val loss 0.9436 acc 0.646 F1 0.601 | 25.6s
+3212.1s 245 Epoch 063/080 | train loss 0.9559 acc 0.655 | val loss 0.9448 acc 0.645 F1 0.601 | 25.6s
+3237.5s 246 Epoch 064/080 | train loss 0.9582 acc 0.652 | val loss 0.9431 acc 0.649 F1 0.608 | 25.5s
+3263.2s 247 Epoch 065/080 | train loss 0.9594 acc 0.656 | val loss 0.9423 acc 0.647 F1 0.604 | 25.6s
+3288.7s 248 Epoch 066/080 | train loss 0.9560 acc 0.655 | val loss 0.9398 acc 0.649 F1 0.606 | 25.5s
+3314.3s 249 Epoch 067/080 | train loss 0.9556 acc 0.658 | val loss 0.9416 acc 0.648 F1 0.604 | 25.6s
+3339.7s 250 Epoch 068/080 | train loss 0.9515 acc 0.657 | val loss 0.9399 acc 0.648 F1 0.604 | 25.4s
+3365.2s 251 Epoch 069/080 | train loss 0.9520 acc 0.656 | val loss 0.9430 acc 0.645 F1 0.600 | 25.5s
+3390.3s 252 Epoch 070/080 | train loss 0.9522 acc 0.656 | val loss 0.9403 acc 0.649 F1 0.606 | 25.1s
+3415.9s 253 Epoch 071/080 | train loss 0.9539 acc 0.656 | val loss 0.9411 acc 0.650 F1 0.605 | 25.6s
+3441.2s 254 Epoch 072/080 | train loss 0.9551 acc 0.657 | val loss 0.9393 acc 0.648 F1 0.603 | 25.3s
+3466.7s 255 Epoch 073/080 | train loss 0.9484 acc 0.658 | val loss 0.9383 acc 0.651 F1 0.607 | 25.5s
+3492.1s 256 Epoch 074/080 | train loss 0.9516 acc 0.657 | val loss 0.9371 acc 0.652 F1 0.608 | 25.3s
+3517.4s 257 Epoch 075/080 | train loss 0.9478 acc 0.659 | val loss 0.9406 acc 0.648 F1 0.604 | 25.3s
+3542.8s 258 Epoch 076/080 | train loss 0.9542 acc 0.657 | val loss 0.9405 acc 0.647 F1 0.602 | 25.4s
+3568.1s 259 Epoch 077/080 | train loss 0.9499 acc 0.657 | val loss 0.9401 acc 0.649 F1 0.604 | 25.3s
+3593.6s 260 Epoch 078/080 | train loss 0.9558 acc 0.656 | val loss 0.9432 acc 0.644 F1 0.599 | 25.5s
+3619.1s 261 Epoch 079/080 | train loss 0.9452 acc 0.659 | val loss 0.9397 acc 0.648 F1 0.608 | 25.5s
+3619.3s 262 Early stopping; best validation epoch: 61.
+3620.5s 263 lighting: validation accuracy 65.34%, F1 0.6119
+3620.5s 264 Selected cnn/baseline by validation accuracy. Gain over baseline: +0.00%
+3620.5s 265 Selected M1: baseline
+3620.5s 266 Checkpoint: /kaggle/working/fer2013_accuracy_v2/outputs/cnn/best.pt
+3620.7s 267 
+3620.7s 268 === transfer: baseline ===
+3620.9s 269 Downloading: "https://download.pytorch.org/models/resnet18-f37072fd.pth" to /root/.cache/torch/hub/checkpoints/resnet18-f37072fd.pth
+3621.0s 270 0%|          | 0.00/44.7M [00:00<?, ?B/s]
+3621.1s 271 0%|          | 0.00/44.7M [00:00<?, ?B/s] 21%|██▏       | 9.50M/44.7M [00:00<00:00, 99.6MB/s]
+3621.2s 272 21%|██▏       | 9.50M/44.7M [00:00<00:00, 99.6MB/s] 75%|███████▌  | 33.6M/44.7M [00:00<00:00, 189MB/s]
+3621.2s 273 75%|███████▌  | 33.6M/44.7M [00:00<00:00, 189MB/s] 100%|██████████| 44.7M/44.7M [00:00<00:00, 184MB/s]
+3621.3s 274 100%|██████████| 44.7M/44.7M [00:00<00:00, 184MB/s]
+3621.3s 275 
+3621.3s 276 
+3622.1s 277 transfer: 11,173,831 parameters | cuda | AMP=True
+3660.5s 278 Epoch 001/020 | train loss 1.4176 acc 0.464 | val loss 1.1966 acc 0.571 F1 0.513 | 38.3s *
+3696.8s 279 Epoch 002/020 | train loss 1.1306 acc 0.580 | val loss 1.0998 acc 0.598 F1 0.536 | 36.2s *
+3733.4s 280 Epoch 003/020 | train loss 1.0282 acc 0.622 | val loss 1.0123 acc 0.632 F1 0.584 | 36.5s *
+3769.8s 281 Epoch 004/020 | train loss 0.9549 acc 0.655 | val loss 0.9874 acc 0.642 F1 0.605 | 36.3s *
+3806.2s 282 Epoch 005/020 | train loss 0.8915 acc 0.679 | val loss 1.0105 acc 0.641 F1 0.607 | 36.3s
+3842.5s 283 Epoch 006/020 | train loss 0.8357 acc 0.701 | val loss 0.9869 acc 0.642 F1 0.619 | 36.2s *
+3878.7s 284 Epoch 007/020 | train loss 0.7792 acc 0.724 | val loss 0.9667 acc 0.657 F1 0.628 | 36.0s *
+3914.9s 285 Epoch 008/020 | train loss 0.7315 acc 0.746 | val loss 0.9817 acc 0.651 F1 0.622 | 36.2s
+3951.1s 286 Epoch 009/020 | train loss 0.6820 acc 0.764 | val loss 0.9721 acc 0.657 F1 0.629 | 36.0s *
+3987.3s 287 Epoch 010/020 | train loss 0.6277 acc 0.787 | val loss 1.0024 acc 0.657 F1 0.631 | 36.1s
+4023.5s 288 Epoch 011/020 | train loss 0.5767 acc 0.809 | val loss 1.0006 acc 0.662 F1 0.634 | 36.1s *
+4059.7s 289 Epoch 012/020 | train loss 0.5289 acc 0.828 | val loss 1.0179 acc 0.666 F1 0.642 | 36.2s *
+4096.0s 290 Epoch 013/020 | train loss 0.4949 acc 0.843 | val loss 1.0166 acc 0.673 F1 0.646 | 36.2s *
+4132.2s 291 Epoch 014/020 | train loss 0.4538 acc 0.858 | val loss 1.0383 acc 0.667 F1 0.649 | 36.1s
+4168.4s 292 Epoch 015/020 | train loss 0.4194 acc 0.875 | val loss 1.0476 acc 0.670 F1 0.647 | 36.1s
+4204.4s 293 Epoch 016/020 | train loss 0.3980 acc 0.883 | val loss 1.0501 acc 0.668 F1 0.647 | 36.0s
+4240.6s 294 Epoch 017/020 | train loss 0.3752 acc 0.892 | val loss 1.0446 acc 0.671 F1 0.651 | 36.1s
+4276.8s 295 Epoch 018/020 | train loss 0.3679 acc 0.894 | val loss 1.0552 acc 0.670 F1 0.647 | 36.1s
+4313.1s 296 Epoch 019/020 | train loss 0.3549 acc 0.898 | val loss 1.0497 acc 0.674 F1 0.651 | 36.1s *
+4349.4s 297 Epoch 020/020 | train loss 0.3537 acc 0.902 | val loss 1.0521 acc 0.673 F1 0.650 | 36.2s
+4352.4s 298 baseline: validation accuracy 67.43%, F1 0.6514
+4352.4s 299 
+4352.4s 300 === transfer: lighting ===
+4353.3s 301 transfer: 11,173,831 parameters | cuda | AMP=True
+4393.9s 302 Epoch 001/020 | train loss 1.4304 acc 0.458 | val loss 1.2111 acc 0.552 F1 0.502 | 40.5s *
+4434.5s 303 Epoch 002/020 | train loss 1.1376 acc 0.578 | val loss 1.0762 acc 0.610 F1 0.553 | 40.4s *
+4475.0s 304 Epoch 003/020 | train loss 1.0376 acc 0.619 | val loss 1.0043 acc 0.628 F1 0.582 | 40.4s *
+4515.5s 305 Epoch 004/020 | train loss 0.9710 acc 0.646 | val loss 0.9905 acc 0.641 F1 0.601 | 40.4s *
+4555.8s 306 Epoch 005/020 | train loss 0.9141 acc 0.668 | val loss 1.0114 acc 0.635 F1 0.589 | 40.2s
+4596.5s 307 Epoch 006/020 | train loss 0.8595 acc 0.694 | val loss 0.9428 acc 0.657 F1 0.622 | 40.6s *
+4637.7s 308 Epoch 007/020 | train loss 0.7974 acc 0.717 | val loss 0.9447 acc 0.655 F1 0.619 | 41.1s
+4680.5s 309 Epoch 008/020 | train loss 0.7522 acc 0.739 | val loss 0.9484 acc 0.657 F1 0.631 | 42.6s *
+4722.2s 310 Epoch 009/020 | train loss 0.7042 acc 0.753 | val loss 0.9977 acc 0.648 F1 0.631 | 41.7s
+4763.2s 311 Epoch 010/020 | train loss 0.6579 acc 0.775 | val loss 0.9867 acc 0.659 F1 0.624 | 40.9s *
+4804.3s 312 Epoch 011/020 | train loss 0.6144 acc 0.795 | val loss 0.9483 acc 0.670 F1 0.640 | 40.9s *
+4845.3s 313 Epoch 012/020 | train loss 0.5681 acc 0.811 | val loss 0.9672 acc 0.673 F1 0.648 | 40.9s *
+4886.8s 314 Epoch 013/020 | train loss 0.5287 acc 0.826 | val loss 0.9647 acc 0.677 F1 0.649 | 41.3s *
+4929.5s 315 Epoch 014/020 | train loss 0.4905 acc 0.843 | val loss 0.9811 acc 0.668 F1 0.650 | 42.7s
+4973.0s 316 Epoch 015/020 | train loss 0.4644 acc 0.851 | val loss 0.9827 acc 0.681 F1 0.658 | 43.3s *
+5016.2s 317 Epoch 016/020 | train loss 0.4405 acc 0.864 | val loss 0.9883 acc 0.674 F1 0.653 | 43.2s
+5058.8s 318 Epoch 017/020 | train loss 0.4149 acc 0.875 | val loss 0.9895 acc 0.676 F1 0.657 | 42.5s
+5099.9s 319 Epoch 018/020 | train loss 0.4067 acc 0.876 | val loss 0.9913 acc 0.680 F1 0.656 | 41.0s
+5140.8s 320 Epoch 019/020 | train loss 0.3961 acc 0.881 | val loss 0.9924 acc 0.677 F1 0.653 | 40.8s
+5181.8s 321 Epoch 020/020 | train loss 0.3931 acc 0.883 | val loss 0.9919 acc 0.679 F1 0.657 | 41.0s
+5184.7s 322 lighting: validation accuracy 68.06%, F1 0.6584
+5184.7s 323 
+5184.7s 324 === transfer: regularized ===
+5185.6s 325 transfer: 11,173,831 parameters | cuda | AMP=True
+5227.5s 326 Epoch 001/020 | train loss 1.5271 acc 0.415 | val loss 1.2887 acc 0.515 F1 0.444 | 41.7s *
+5268.4s 327 Epoch 002/020 | train loss 1.2249 acc 0.538 | val loss 1.1318 acc 0.584 F1 0.524 | 40.8s *
+5309.4s 328 Epoch 003/020 | train loss 1.1231 acc 0.585 | val loss 1.0533 acc 0.615 F1 0.570 | 40.9s *
+5351.1s 329 Epoch 004/020 | train loss 1.0503 acc 0.613 | val loss 1.0302 acc 0.626 F1 0.585 | 41.6s *
+5392.9s 330 Epoch 005/020 | train loss 1.0026 acc 0.634 | val loss 1.0177 acc 0.629 F1 0.592 | 41.7s *
+5434.6s 331 Epoch 006/020 | train loss 0.9513 acc 0.656 | val loss 0.9651 acc 0.652 F1 0.624 | 41.5s *
+5476.5s 332 Epoch 007/020 | train loss 0.9046 acc 0.676 | val loss 0.9755 acc 0.646 F1 0.612 | 41.8s
+5518.8s 333 Epoch 008/020 | train loss 0.8712 acc 0.688 | val loss 0.9585 acc 0.655 F1 0.623 | 42.2s *
+5561.8s 334 Epoch 009/020 | train loss 0.8396 acc 0.700 | val loss 0.9731 acc 0.644 F1 0.619 | 42.9s
+5605.7s 335 Epoch 010/020 | train loss 0.8009 acc 0.715 | val loss 0.9793 acc 0.647 F1 0.612 | 43.8s
+5648.5s 336 Epoch 011/020 | train loss 0.7738 acc 0.726 | val loss 0.9441 acc 0.661 F1 0.634 | 42.7s *
+5691.8s 337 Epoch 012/020 | train loss 0.7468 acc 0.740 | val loss 0.9528 acc 0.661 F1 0.639 | 43.1s *
+5733.8s 338 Epoch 013/020 | train loss 0.7210 acc 0.749 | val loss 0.9534 acc 0.659 F1 0.641 | 42.0s
+5776.2s 339 Epoch 014/020 | train loss 0.6977 acc 0.759 | val loss 0.9455 acc 0.671 F1 0.647 | 42.3s *
+5817.7s 340 Epoch 015/020 | train loss 0.6791 acc 0.765 | val loss 0.9523 acc 0.665 F1 0.637 | 41.5s
+5858.9s 341 Epoch 016/020 | train loss 0.6613 acc 0.777 | val loss 0.9488 acc 0.673 F1 0.644 | 41.1s *
+5900.4s 342 Epoch 017/020 | train loss 0.6526 acc 0.777 | val loss 0.9484 acc 0.677 F1 0.652 | 41.4s *
+5942.1s 343 Epoch 018/020 | train loss 0.6360 acc 0.785 | val loss 0.9495 acc 0.676 F1 0.648 | 41.7s
+5984.0s 344 Epoch 019/020 | train loss 0.6386 acc 0.784 | val loss 0.9488 acc 0.678 F1 0.649 | 41.7s *
+6025.6s 345 Epoch 020/020 | train loss 0.6353 acc 0.786 | val loss 0.9485 acc 0.677 F1 0.649 | 41.6s
+6028.5s 346 regularized: validation accuracy 67.82%, F1 0.6490
+6028.5s 347 Selected transfer/lighting by validation accuracy. Gain over baseline: +0.63%
+6028.5s 348 Selected M2: lighting
+6028.5s 349 Checkpoint: /kaggle/working/fer2013_accuracy_v2/outputs/transfer/best.pt
+6033.5s 350 {
+6033.5s 351 "model": "cnn",
+6033.5s 352 "test_accuracy": 0.6577040958484257,
+6033.5s 353 "test_macro_f1": 0.6260161639708818,
+6033.5s 354 "parameters": 980711,
+6033.5s 355 "test_images": 7178,
+6033.5s 356 "best_epoch": 68,
+6033.5s 357 "target_accuracy": 0.6,
+6033.5s 358 "target_met": true,
+6033.5s 359 "cpu_model_fps": 546.0726252006667,
+6033.5s 360 "cpu_model_ms": 1.8312582500038843,
+6033.5s 361 "benchmark_iterations": 100,
+6033.5s 362 "cpu_threads": 4,
+6033.5s 363 "cpu": "x86_64",
+6033.5s 364 "benchmark_scope": "CPU model forward only; batch=1, 1x48x48, float32; excludes face detection, I/O and preprocessing"
+6033.5s 365 }
+6043.5s 366 {
+6043.5s 367 "model": "transfer",
+6043.5s 368 "test_accuracy": 0.6707996656450265,
+6043.5s 369 "test_macro_f1": 0.6573203807325722,
+6043.5s 370 "parameters": 11173831,
+6043.5s 371 "test_images": 7178,
+6043.5s 372 "best_epoch": 15,
+6043.5s 373 "target_accuracy": 0.65,
+6043.5s 374 "target_met": true,
+6043.5s 375 "cpu_model_fps": 46.117799467190466,
+6043.5s 376 "cpu_model_ms": 21.683601810000255,
+6043.5s 377 "benchmark_iterations": 100,
+6043.5s 378 "cpu_threads": 4,
+6043.5s 379 "cpu": "x86_64",
+6043.5s 380 "benchmark_scope": "CPU model forward only; batch=1, 1x48x48, float32; excludes face detection, I/O and preprocessing"
+6043.5s 381 }
+6043.5s 382 Model        Accuracy   Macro F1   Parameters    CPU FPS
+6043.5s 383 cnn            65.77%     0.6260      980,711      546.1
+6043.5s 384 transfer       67.08%     0.6573   11,173,831       46.1
+6043.5s 385 
+6043.5s 386 CNN
+6043.5s 387 # cnn error analysis
+6043.5s 388 
+6043.5s 389 Selected 10 errors out of 2457 test mistakes.
+6043.5s 390 These are probability-based observations and inspection prompts; add your own visual observations.
+6043.5s 391 
+6043.5s 392 - #1 `test/angry/PrivateTest_1054527.jpg`: Assigned sad 86.6%, versus angry 2.9% (gap 83.7%). Confident error; inspect label ambiguity, face crop and domain mismatch.
+6043.5s 393 - #2 `test/disgust/PrivateTest_11895083.jpg`: Assigned surprise 77.9%, versus disgust 2.3% (gap 75.6%). Inspect the shared facial cues and whether this label is visually ambiguous.
+6043.5s 394 - #3 `test/fear/PrivateTest_10254684.jpg`: Assigned angry 31.3%, versus fear 17.7% (gap 13.6%). Inspect the shared facial cues and whether this label is visually ambiguous.
+6043.5s 395 - #4 `test/happy/PrivateTest_11288161.jpg`: Assigned neutral 72.3%, versus happy 15.7% (gap 56.6%). Inspect the shared facial cues and whether this label is visually ambiguous.
+6043.5s 396 - #5 `test/neutral/PrivateTest_11164800.jpg`: Assigned angry 63.6%, versus neutral 15.1% (gap 48.5%). Inspect the shared facial cues and whether this label is visually ambiguous.
+6043.5s 397 - #6 `test/sad/PrivateTest_10247676.jpg`: Assigned angry 27.0%, versus sad 14.9% (gap 12.1%). Inspect the shared facial cues and whether this label is visually ambiguous.
+6043.5s 398 - #7 `test/surprise/PrivateTest_10427382.jpg`: Assigned happy 46.0%, versus surprise 34.1% (gap 11.9%). Inspect the shared facial cues and whether this label is visually ambiguous.
+6043.5s 399 - #8 `test/angry/PrivateTest_10590091.jpg`: Assigned neutral 30.5%, versus angry 24.7% (gap 5.9%). Inspect the shared facial cues and whether this label is visually ambiguous.
+6043.5s 400 - #9 `test/angry/PrivateTest_12000629.jpg`: Assigned neutral 33.0%, versus angry 20.5% (gap 12.4%). Inspect the shared facial cues and whether this label is visually ambiguous.
+6043.5s 401 - #10 `test/angry/PrivateTest_12403575.jpg`: Assigned disgust 69.6%, versus angry 17.2% (gap 52.4%). Inspect the shared facial cues and whether this label is visually ambiguous.
+6043.5s 402 
+6043.5s 403 ## Most frequent confusions
+6043.5s 404 
+6043.5s 405 - sad -> neutral: 362 images.
+6043.5s 406 - fear -> neutral: 188 images.
+6043.5s 407 - fear -> sad: 178 images.
+6043.5s 408 - angry -> neutral: 160 images.
+6043.5s 409 - sad -> angry: 132 images.
+6043.5s 410 
+6043.5s 411 TRANSFER
+6043.5s 412 # transfer error analysis
+6043.5s 413 
+6043.5s 414 Selected 10 errors out of 2363 test mistakes.
+6043.5s 415 These are probability-based observations and inspection prompts; add your own visual observations.
+6043.5s 416 
+6043.5s 417 - #1 `test/angry/PrivateTest_1054527.jpg`: Assigned sad 83.3%, versus angry 4.1% (gap 79.2%). Confident error; inspect label ambiguity, face crop and domain mismatch.
+6043.5s 418 - #2 `test/disgust/PrivateTest_11895083.jpg`: Assigned fear 97.2%, versus disgust 0.3% (gap 96.9%). Confident error; inspect label ambiguity, face crop and domain mismatch.
+6043.5s 419 - #3 `test/fear/PrivateTest_10254684.jpg`: Assigned angry 43.9%, versus fear 36.0% (gap 7.9%). Inspect the shared facial cues and whether this label is visually ambiguous.
+6043.5s 420 - #4 `test/happy/PrivateTest_11288161.jpg`: Assigned neutral 96.0%, versus happy 0.4% (gap 95.6%). Confident error; inspect label ambiguity, face crop and domain mismatch.
+6043.5s 421 - #5 `test/neutral/PrivateTest_1129340.jpg`: Assigned sad 42.8%, versus neutral 42.1% (gap 0.7%). Inspect the shared facial cues and whether this label is visually ambiguous.
+6043.5s 422 - #6 `test/sad/PrivateTest_10658656.jpg`: Assigned surprise 93.4%, versus sad 0.2% (gap 93.1%). Confident error; inspect label ambiguity, face crop and domain mismatch.
+6043.5s 423 - #7 `test/surprise/PrivateTest_10782186.jpg`: Assigned angry 65.9%, versus surprise 3.3% (gap 62.7%). Inspect the shared facial cues and whether this label is visually ambiguous.
+6043.5s 424 - #8 `test/angry/PrivateTest_11296953.jpg`: Assigned sad 47.5%, versus angry 19.5% (gap 28.0%). Inspect the shared facial cues and whether this label is visually ambiguous.
+6043.5s 425 - #9 `test/angry/PrivateTest_12000629.jpg`: Assigned surprise 58.8%, versus angry 4.5% (gap 54.3%). Inspect the shared facial cues and whether this label is visually ambiguous.
+6043.5s 426 - #10 `test/angry/PrivateTest_12191716.jpg`: Assigned neutral 46.7%, versus angry 13.1% (gap 33.6%). Inspect the shared facial cues and whether this label is visually ambiguous.
+6043.5s 427 
+6043.5s 428 ## Most frequent confusions
+6043.5s 429 
+6043.5s 430 - sad -> neutral: 238 images.
+6043.5s 431 - fear -> sad: 211 images.
+6043.5s 432 - neutral -> sad: 182 images.
+6043.5s 433 - sad -> fear: 142 images.
+6043.5s 434 - angry -> sad: 141 images.
+6046.0s 435 Report: /kaggle/working/fer2013_accuracy_v2/report.pdf
+6046.0s 436 Weights: /kaggle/working/fer2013_accuracy_v2/weights
+6065.4s 437 Download from the Kaggle Output panel: /kaggle/working/fer2013_accuracy_v2.zip
+6070.6s 438 /usr/local/lib/python3.13/dist-packages/mistune.py:435: SyntaxWarning: invalid escape sequence '\|'
+6070.6s 439 cells[i][c] = re.sub('\\\\\|', '|', cell)
+6070.8s 440 /usr/local/lib/python3.13/dist-packages/nbconvert/filters/filter_links.py:36: SyntaxWarning: invalid escape sequence '\_'
+6070.8s 441 text = re.sub(r'_', '\_', text) # Escape underscores in display text
+6071.6s 442 [NbConvertApp] Converting notebook __notebook__.ipynb to notebook
+6071.8s 443 [NbConvertApp] Writing 922791 bytes to __notebook__.ipynb
+6074.2s 444 [NbConvertApp] Converting notebook __notebook__.ipynb to html
+6074.8s 445 [NbConvertApp] Support files will be in __results___files/
+6074.8s 446 [NbConvertApp] Making directory __results___files
+6074.8s 447 [NbConvertApp] Making directory __results___files
+6074.8s 448 [NbConvertApp] Making directory __results___files
+6074.8s 449 [NbConvertApp] Making directory __results___files
+6074.8s 450 [NbConvertApp] Making directory __results___files
+6074.8s 451 [NbConvertApp] Making directory __results___files
+6074.8s 452 [NbConvertApp] Making directory __results___files
+6074.8s 453 [NbConvertApp] Writing 362208 bytes to __results__.html

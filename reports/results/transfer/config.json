@@ -1,0 +1,19 @@
+{
+  "model_name": "transfer",
+  "epochs": 40,
+  "learning_rate": 0.0001,
+  "backbone_lr": 1e-05,
+  "weight_decay": 0.0001,
+  "patience": 10,
+  "label_smoothing": 0.02,
+  "use_class_weights": true,
+  "pretrained": true,
+  "amp": true,
+  "seed": 42,
+  "device": "auto",
+  "cpu_threads": 4,
+  "augmentation": "fer_moderate",
+  "architecture": "ddamfn",
+  "pretrained_path": "/root/.cache/torch/hub/checkpoints/ddamfn_affectnet7.pth",
+  "warmup_epochs": 2
+}

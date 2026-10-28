@@ -1,6 +1,6 @@
 """Build a six-page report from real experiment outputs, without inventing results.
 
-python -m src.report --results outputs --output report.pdf --screenshot outputs/demo_screenshot.jpg
+python -m src.report --results reports/results --output reports/report.pdf --screenshot reports/demo_screenshot.jpg
 """
 
 import argparse
@@ -19,7 +19,7 @@ def read_json(path):
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
-def build_report(results_dir, output_path="report.pdf", screenshot=None, author="Student name / ID"):
+def build_report(results_dir, output_path="reports/report.pdf", screenshot=None, author="Student name / ID"):
     results_dir, output_path = Path(results_dir), Path(output_path)
     metrics = {name: read_json(results_dir / name / "metrics.json") for name in ["cnn", "transfer"]}
     configs = {name: read_json(results_dir / name / "config.json") for name in metrics}
@@ -160,9 +160,9 @@ def build_report(results_dir, output_path="report.pdf", screenshot=None, author=
 
         fig = page("Realtime system and demonstration", 6)
         paragraph(fig,
-            "Pipeline: OpenCV VideoCapture -> Haar frontal-face detection -> crop each face with "
+            "Pipeline: OpenCV VideoCapture -> pretrained YuNet face detection (320x320 letterbox) -> crop each face with "
             "a small margin -> shared grayscale preprocessing -> batched PyTorch inference -> "
-            "softmax -> bounding boxes, labels, confidence and FPS.\n\n"
+            "softmax -> bounding boxes, large emotion labels on dark panels, confidence and FPS.\n\n"
             "The command line selects cnn/transfer and accepts a phone URL, webcam, image or file "
             "video. Connection failures trigger bounded retries and a clear error. Low-confidence "
             "predictions are labelled uncertain. Press s to save the phone-camera demonstration.\n\n"
@@ -178,10 +178,11 @@ def build_report(results_dir, output_path="report.pdf", screenshot=None, author=
                       "This report is a draft until the demonstration and visual error analysis are completed.", 0.55)
         paragraph(fig,
             "Limitations: FER labels can be ambiguous; a visible expression does not reliably reveal "
-            "a person's internal emotional state. Haar detection is strongest on frontal faces. "
+            "a person's internal emotional state. Strong profiles, small faces and occlusion can hinder detection. "
             "Lighting, pose, occlusion and the FER-to-phone domain shift can reduce accuracy. "
             "Softmax scores are model confidence values, not calibrated probabilities.\n\n"
-            "Sources: kaggle.com/datasets/msambare/fer2013; "
+            "Sources: kaggle.com/datasets/msambare/fer2013; OpenCV Zoo YuNet "
+            "(github.com/opencv/opencv_zoo), with model provenance/license in assets/. "
             + ("github.com/SainingZhang/DDAMFN (DDAMFN++ AffectNet-7); pinned source revision "
                "and weight SHA-256 are recorded in pretrained_source.json. " if is_ddam else
                "torchvision ImageNet ResNet-18 documentation. ") +
@@ -193,9 +194,9 @@ def build_report(results_dir, output_path="report.pdf", screenshot=None, author=
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--results", type=Path, default=Path("outputs"))
-    parser.add_argument("--output", type=Path, default=Path("report.pdf"))
-    parser.add_argument("--screenshot", type=Path)
+    parser.add_argument("--results", type=Path, default=Path("reports/results"))
+    parser.add_argument("--output", type=Path, default=Path("reports/report.pdf"))
+    parser.add_argument("--screenshot", type=Path, default=Path("reports/demo_screenshot.jpg"))
     parser.add_argument("--author", default="Student name / ID")
     args = parser.parse_args()
     print(build_report(args.results, args.output, args.screenshot, args.author))

@@ -1,0 +1,9 @@
+{
+  "best_epoch": 15,
+  "best_val_accuracy": 0.6805990943921978,
+  "best_val_macro_f1": 0.6584111683517021,
+  "training_seconds": 828.4380843400004,
+  "device": "cuda",
+  "torch_version": "2.11.0+cu128",
+  "gpu": "Tesla T4"
+}

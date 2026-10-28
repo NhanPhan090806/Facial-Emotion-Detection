@@ -15,7 +15,7 @@ from src.train import resolve_device
 def load_checkpoint(path, device="cpu"):
     path = Path(path)
     if not path.is_file():
-        raise FileNotFoundError(f"Checkpoint not found: {path}. Train first or copy Kaggle weights into weights/.")
+        raise FileNotFoundError(f"Checkpoint not found: {path}. Train first or copy the selected checkpoints into models/.")
     device = resolve_device(str(device))
     checkpoint = torch.load(path, map_location="cpu", weights_only=True)
     if checkpoint.get("class_names") != CLASS_NAMES:

@@ -1,0 +1,4 @@
+candidate,val_accuracy,val_macro_f1,val_loss,epoch,augmentation,checkpoint
+baseline,0.6743295019157088,0.6514144707687547,1.0497208917153418,19,baseline,/kaggle/working/fer2013_accuracy_v2/outputs/experiments/transfer/baseline/best.pt
+lighting,0.6805990943921978,0.6584111683517021,0.9827244970201408,15,lighting,/kaggle/working/fer2013_accuracy_v2/outputs/experiments/transfer/lighting/best.pt
+regularized,0.6781609195402298,0.6490004161215486,0.9487797980605829,19,occlusion,/kaggle/working/fer2013_accuracy_v2/outputs/experiments/transfer/regularized/best.pt

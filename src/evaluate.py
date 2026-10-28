@@ -1,6 +1,7 @@
 """Generate the lab's metrics, training curves, confusion matrices and errors."""
 
 import csv
+import hashlib
 import json
 import platform
 import time
@@ -221,3 +222,20 @@ def compare_models(metrics, output_dir):
         writer.writerows(metrics)
     save_json(metrics, output_dir / "comparison.json")
     return [{key: result[key] for key in fields} for result in metrics]
+
+
+def write_model_manifest(metrics, model_dir, run_name):
+    """Record checksums for the selected files exported by either training notebook."""
+    model_dir = Path(model_dir)
+    manifest = {"selected_run": run_name, "models": {}}
+    for result in metrics:
+        name = result["model"]
+        checkpoint = model_dir / f"{name}_best.pt"
+        manifest["models"][name] = {
+            "file": checkpoint.name,
+            "sha256": hashlib.sha256(checkpoint.read_bytes()).hexdigest(),
+            "architecture": result["architecture"], "best_epoch": result["best_epoch"],
+            "test_accuracy": result["test_accuracy"], "test_macro_f1": result["test_macro_f1"],
+        }
+    save_json(manifest, model_dir / "manifest.json")
+    return manifest

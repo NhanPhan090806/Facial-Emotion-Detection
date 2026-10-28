@@ -1,0 +1,27 @@
+{
+  "model": "cnn",
+  "selected_candidate": "baseline",
+  "criterion": "validation_accuracy_then_macro_f1",
+  "candidates": [
+    {
+      "candidate": "baseline",
+      "val_accuracy": 0.658307210031348,
+      "val_macro_f1": 0.6133364082913839,
+      "val_loss": 0.9366049426061192,
+      "epoch": 68,
+      "augmentation": "baseline",
+      "checkpoint": "/kaggle/working/fer2013_accuracy_v2/outputs/experiments/cnn/baseline/best.pt"
+    },
+    {
+      "candidate": "lighting",
+      "val_accuracy": 0.653430860327412,
+      "val_macro_f1": 0.611913264657711,
+      "val_loss": 0.9412619452242318,
+      "epoch": 61,
+      "augmentation": "lighting",
+      "checkpoint": "/kaggle/working/fer2013_accuracy_v2/outputs/experiments/cnn/lighting/best.pt"
+    }
+  ],
+  "validation_accuracy_gain": 0.0,
+  "checkpoint": "/kaggle/working/fer2013_accuracy_v2/outputs/cnn/best.pt"
+}

@@ -1,0 +1,17 @@
+{
+  "model": "cnn",
+  "architecture": "cnn",
+  "test_accuracy": 0.6641125661744218,
+  "test_macro_f1": 0.6414540700867616,
+  "parameters": 980711,
+  "test_images": 7178,
+  "best_epoch": 67,
+  "target_accuracy": 0.6,
+  "target_met": true,
+  "cpu_model_fps": 495.77049269026736,
+  "cpu_model_ms": 2.0170623599915416,
+  "benchmark_iterations": 100,
+  "cpu_threads": 4,
+  "cpu": "x86_64",
+  "benchmark_scope": "CPU model forward only; batch=1, (1, 48, 48), float32; excludes face detection, I/O and preprocessing"
+}
